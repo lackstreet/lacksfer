@@ -7,6 +7,7 @@ import it.lacksfer.adapters.in.rest.dto.GetTransferResponse;
 import it.lacksfer.application.transfer.CreateTransferUseCase;
 import it.lacksfer.application.transfer.GetTransferByDownloadTokenUseCase;
 import it.lacksfer.domain.Transfer;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -28,7 +29,7 @@ public class TransferResource {
     }
 
     @POST
-    public CreateTransferResponse create(CreateTransferRequest request){
+    public CreateTransferResponse create(@Valid CreateTransferRequest request){
         Transfer transfer = createTransferUseCase.execute(
                 request.fileName(),
                 request.expiresAt()
