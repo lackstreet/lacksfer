@@ -2,6 +2,7 @@ package it.lacksfer.adapters.in.rest;
 
 import it.lacksfer.adapters.in.rest.dto.CreateTransferRequest;
 import it.lacksfer.adapters.in.rest.dto.CreateTransferResponse;
+import it.lacksfer.adapters.in.rest.dto.ErrorResponse;
 import it.lacksfer.adapters.in.rest.dto.GetTransferResponse;
 import it.lacksfer.application.transfer.CreateTransferUseCase;
 import it.lacksfer.application.transfer.GetTransferByDownloadTokenUseCase;
@@ -48,7 +49,9 @@ public class TransferResource {
                         transfer.getFileName(),
                         transfer.isExpired()
                 )).build())
-                .orElse(Response.status(Response.Status.NOT_FOUND).build());
+                .orElse(Response.status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("Transfer not found"))
+                        .build());
     }
 
 }
