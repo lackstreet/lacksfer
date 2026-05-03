@@ -1,6 +1,6 @@
 package it.lacksfer.application.transfer;
 
-import it.lacksfer.domain.Transfer;
+import it.lacksfer.domain.transfer.Transfer;
 import it.lacksfer.ports.out.TransferRepositoryPort;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;

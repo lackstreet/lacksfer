@@ -1,6 +1,6 @@
 package it.lacksfer.adapters.out.persistence;
 
-import it.lacksfer.domain.Transfer;
+import it.lacksfer.domain.transfer.Transfer;
 
 public class TransferMapper {
     public Transfer toDomain(TransferEntity entity) {
@@ -9,7 +9,8 @@ public class TransferMapper {
                 entity.getFileName(),
                 entity.getCreatedAt(),
                 entity.getExpiresAt(),
-                entity.getDownloadToken()
+                entity.getDownloadToken(),
+                entity.getBlobName()
         );
     }
 
@@ -19,7 +20,8 @@ public class TransferMapper {
                 transfer.getFileName(),
                 transfer.getCreatedAt(),
                 transfer.getExpiresAt(),
-                transfer.getDownloadToken()
+                transfer.getDownloadToken(),
+                transfer.getBlobName()
         );
     }
 }

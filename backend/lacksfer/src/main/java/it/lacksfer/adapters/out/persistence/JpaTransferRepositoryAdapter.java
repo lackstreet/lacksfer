@@ -1,7 +1,7 @@
 package it.lacksfer.adapters.out.persistence;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import it.lacksfer.domain.Transfer;
+import it.lacksfer.domain.transfer.Transfer;
 import it.lacksfer.ports.out.TransferRepositoryPort;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;

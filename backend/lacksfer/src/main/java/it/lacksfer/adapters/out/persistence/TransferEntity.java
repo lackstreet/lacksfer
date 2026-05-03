@@ -23,14 +23,17 @@ public class TransferEntity {
     private Instant expiresAt;
     @NotNull
     private String downloadToken;
+    @NotNull
+    private String blobName;
 
     protected TransferEntity() {}
 
-    public TransferEntity(UUID id, String fileName, Instant createdAt, Instant expiresAt, String downloadToken) {
+    public TransferEntity(UUID id, String fileName, Instant createdAt, Instant expiresAt, String downloadToken, String blobName) {
         this.id = id;
         this.fileName = fileName;
         this.createdAt = createdAt;
         this.expiresAt = expiresAt;
         this.downloadToken = downloadToken;
+        this.blobName = blobName;
     }
 }
