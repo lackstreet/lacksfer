@@ -2,22 +2,28 @@ package it.lacksfer.adapters.in.rest;
 
 import it.lacksfer.adapters.in.rest.dto.CreateTransferRequest;
 import it.lacksfer.adapters.in.rest.dto.CreateTransferResponse;
+import it.lacksfer.adapters.in.rest.dto.GetTransferResponse;
 import it.lacksfer.application.transfer.CreateTransferUseCase;
+import it.lacksfer.application.transfer.GetTransferByDownloadTokenUseCase;
 import it.lacksfer.domain.Transfer;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
 
 @Path("/transfers")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public class TransferResource {
     private final CreateTransferUseCase createTransferUseCase;
+    private final GetTransferByDownloadTokenUseCase getTransferByDownloadTokenUseCase;
 
-    public TransferResource(CreateTransferUseCase createTransferUseCase) {
+    public TransferResource(
+            CreateTransferUseCase createTransferUseCase,
+            GetTransferByDownloadTokenUseCase getTransferByDownloadTokenUseCase
+    ) {
         this.createTransferUseCase = createTransferUseCase;
+        this.getTransferByDownloadTokenUseCase = getTransferByDownloadTokenUseCase;
     }
 
     @POST
@@ -31,6 +37,18 @@ public class TransferResource {
                 transfer.getFileName(),
                 transfer.getDownloadToken()
         );
+    }
+
+    @GET
+    @Path("/d-token/{downloadToken}")
+    public Response getByDownloadToken(@PathParam("downloadToken") String downloadToken) {
+        return getTransferByDownloadTokenUseCase.execute(downloadToken)
+                .map(transfer -> Response.ok(new GetTransferResponse(
+                        transfer.getId(),
+                        transfer.getFileName(),
+                        transfer.isExpired()
+                )).build())
+                .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
 
 }
