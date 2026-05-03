@@ -40,7 +40,7 @@ public class TransferResource {
     }
 
     @GET
-    @Path("/d-token/{downloadToken}")
+    @Path("/{downloadToken}")
     public Response getByDownloadToken(@PathParam("downloadToken") String downloadToken) {
         return getTransferByDownloadTokenUseCase.execute(downloadToken)
                 .map(transfer -> Response.ok(new GetTransferResponse(
