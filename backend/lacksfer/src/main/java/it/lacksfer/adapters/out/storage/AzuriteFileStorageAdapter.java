@@ -9,17 +9,18 @@ import it.lacksfer.ports.out.FileStoragePort;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import java.io.InputStream;
 import java.util.UUID;
 @ApplicationScoped
 public class AzuriteFileStorageAdapter implements FileStoragePort {
 
     private final BlobContainerClient containerClient;
 
-    public AzuriteFileStorageAdapter(@ConfigProperty(name= "azurite.connection-string") String connectionString,
-                                     @ConfigProperty(name= "azurite.container-name") String containerName) {
+    public AzuriteFileStorageAdapter(@ConfigProperty(name = "azurite.connection-string") String connectionString,
+                                     @ConfigProperty(name = "azurite.container-name") String containerName) {
         BlobServiceClient blobServiceClient = new BlobServiceClientBuilder().connectionString(connectionString).buildClient();
         this.containerClient = blobServiceClient.getBlobContainerClient(containerName);
-        if(!containerClient.exists()) {
+        if (!containerClient.exists()) {
             containerClient.create();
         }
     }
@@ -39,6 +40,20 @@ public class AzuriteFileStorageAdapter implements FileStoragePort {
             throw new RuntimeException("Failed to store file", e);
         }
 
-        return blobName ;
+        return blobName;
     }
+
+    @Override
+    public InputStream download(String blobName) {
+        try {
+            BlobClient blobClient = containerClient.getBlobClient(blobName);
+            if (!blobClient.exists()) {
+                throw new IllegalArgumentException("File not found");
+            }
+            return blobClient.openInputStream();
+        }catch (Exception e){
+            throw new RuntimeException("Error during download", e);
+        }
+    }
+
 }

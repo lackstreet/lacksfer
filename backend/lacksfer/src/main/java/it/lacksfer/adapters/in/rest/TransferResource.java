@@ -4,6 +4,7 @@ import it.lacksfer.adapters.in.rest.dto.ErrorResponse;
 import it.lacksfer.adapters.in.rest.dto.GetTransferResponse;
 import it.lacksfer.adapters.in.rest.dto.UploadTransferForm;
 import it.lacksfer.adapters.in.rest.dto.UploadTransferResponse;
+import it.lacksfer.application.transfer.DownloadTransferUseCase;
 import it.lacksfer.application.transfer.GetTransferByDownloadTokenUseCase;
 import it.lacksfer.application.transfer.UploadTransferUseCase;
 
@@ -15,6 +16,7 @@ import jakarta.ws.rs.core.Response;
 import org.jboss.resteasy.reactive.MultipartForm;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 
 @Path("/transfers")
@@ -23,12 +25,14 @@ import java.nio.file.Files;
 public class TransferResource {
     private final GetTransferByDownloadTokenUseCase getTransferByDownloadTokenUseCase;
     private final UploadTransferUseCase uploadTransferUseCase;
+    private final DownloadTransferUseCase downloadTransferUseCase;
 
     public TransferResource(
             GetTransferByDownloadTokenUseCase getTransferByDownloadTokenUseCase,
-            UploadTransferUseCase uploadTransferUseCase) {
+            UploadTransferUseCase uploadTransferUseCase, DownloadTransferUseCase downloadTransferUseCase) {
         this.getTransferByDownloadTokenUseCase = getTransferByDownloadTokenUseCase;
         this.uploadTransferUseCase = uploadTransferUseCase;
+        this.downloadTransferUseCase = downloadTransferUseCase;
     }
 
     @POST
@@ -61,8 +65,12 @@ public class TransferResource {
 
 
     @GET
-    @Path("/{downloadToken}")
+    @Path("/{downloadToken}/download")
     public Response getByDownloadToken(@PathParam("downloadToken") String downloadToken) {
+        if(downloadToken == null || downloadToken.isBlank())
+            throw new IllegalArgumentException("downloadToken link required");
+        InputStream stream = downloadTransferUseCase.execute(downloadToken);
+
         return getTransferByDownloadTokenUseCase.execute(downloadToken)
                 .map(transfer -> Response.ok(new GetTransferResponse(
                         transfer.getId(),
