@@ -1,11 +1,9 @@
 package it.lacksfer.adapters.in.rest;
 
-import it.lacksfer.adapters.in.rest.dto.ErrorResponse;
-import it.lacksfer.adapters.in.rest.dto.GetTransferResponse;
+import it.lacksfer.application.transfer.DownloadTransferResult;
 import it.lacksfer.adapters.in.rest.dto.UploadTransferForm;
 import it.lacksfer.adapters.in.rest.dto.UploadTransferResponse;
 import it.lacksfer.application.transfer.DownloadTransferUseCase;
-import it.lacksfer.application.transfer.GetTransferByDownloadTokenUseCase;
 import it.lacksfer.application.transfer.UploadTransferUseCase;
 
 import it.lacksfer.domain.file.FileContent;
@@ -16,21 +14,17 @@ import jakarta.ws.rs.core.Response;
 import org.jboss.resteasy.reactive.MultipartForm;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 
 @Path("/transfers")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public class TransferResource {
-    private final GetTransferByDownloadTokenUseCase getTransferByDownloadTokenUseCase;
     private final UploadTransferUseCase uploadTransferUseCase;
     private final DownloadTransferUseCase downloadTransferUseCase;
 
     public TransferResource(
-            GetTransferByDownloadTokenUseCase getTransferByDownloadTokenUseCase,
             UploadTransferUseCase uploadTransferUseCase, DownloadTransferUseCase downloadTransferUseCase) {
-        this.getTransferByDownloadTokenUseCase = getTransferByDownloadTokenUseCase;
         this.uploadTransferUseCase = uploadTransferUseCase;
         this.downloadTransferUseCase = downloadTransferUseCase;
     }
@@ -72,23 +66,10 @@ public class TransferResource {
             throw new IllegalArgumentException("downloadToken link required");
         }
 
-        return getTransferByDownloadTokenUseCase.execute(downloadToken)
-                .map(transfer -> {
-                    if (transfer.isExpired()) {
-                        return Response.status(Response.Status.GONE)
-                                .entity(new ErrorResponse("Transfer expired"))
-                                .build();
-                    }
+        DownloadTransferResult result = downloadTransferUseCase.execute(downloadToken);
 
-                    InputStream stream = downloadTransferUseCase.execute(downloadToken);
-
-                    return Response.ok(stream)
-                            .header("Content-Disposition",
-                                    "attachment; filename=\"" + transfer.getFileName() + "\"")
-                            .build();
-                })
-                .orElse(Response.status(Response.Status.NOT_FOUND)
-                        .entity(new ErrorResponse("Transfer not found"))
-                        .build());
+        return Response.ok(result.content())
+                .header("Content-Disposition", "attachment; filename=\"" + result.fileName() + "\"")
+                .build();
     }
 }

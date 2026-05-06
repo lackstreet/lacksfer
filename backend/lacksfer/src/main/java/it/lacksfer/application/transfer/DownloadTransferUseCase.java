@@ -19,21 +19,22 @@ public class DownloadTransferUseCase {
         this.fileStoragePort = fileStoragePort;
     }
 
-    public InputStream execute(String downloadToken){
-
-        if (downloadToken == null || downloadToken.isBlank()){
+    public DownloadTransferResult execute(String downloadToken){
+        if(downloadToken == null || downloadToken.isBlank()){
             throw new IllegalArgumentException("downloadToken is required");
         }
 
-        Transfer transfer = repositoryPort.findByDownloadToken(downloadToken)
-                .orElseThrow(() -> new IllegalArgumentException("Download token not valid"));
 
-        if(transfer.isExpired()){
+        Transfer transfer = repositoryPort.findByDownloadToken(downloadToken)
+                .orElseThrow(() -> new IllegalArgumentException("downloadToken not found"));
+
+        if (transfer.isExpired()) {
             throw new IllegalArgumentException("Download link expired");
         }
 
-        return fileStoragePort.download(transfer.getBlobName());
+        InputStream content = fileStoragePort.download(transfer.getBlobName());
 
+        return new DownloadTransferResult(transfer.getFileName(),content);
 
     }
 }
