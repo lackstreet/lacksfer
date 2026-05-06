@@ -42,7 +42,7 @@ public class TransferResource {
         if (form == null || form.file == null) {
             throw new IllegalArgumentException("file is required");
         }
-        try{
+        try {
             FileContent fileContent = new FileContent(
                     form.file.fileName(),
                     form.file.contentType(),
@@ -51,35 +51,44 @@ public class TransferResource {
             );
 
             Transfer transfer = uploadTransferUseCase.execute(
-                    fileContent,form.expiresAt
+                    fileContent, form.expiresAt
             );
             return Response.ok(new UploadTransferResponse(
                     transfer.getId(),
                     transfer.getFileName(),
                     transfer.getDownloadToken()
             )).build();
-        } catch (IOException e ){
-            throw new RuntimeException("Failed to read uploaded file",e);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read uploaded file", e);
         }
     }
 
 
     @GET
     @Path("/{downloadToken}/download")
-    public Response getByDownloadToken(@PathParam("downloadToken") String downloadToken) {
-        if(downloadToken == null || downloadToken.isBlank())
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public Response download(@PathParam("downloadToken") String downloadToken) {
+        if (downloadToken == null || downloadToken.isBlank()) {
             throw new IllegalArgumentException("downloadToken link required");
-        InputStream stream = downloadTransferUseCase.execute(downloadToken);
+        }
 
         return getTransferByDownloadTokenUseCase.execute(downloadToken)
-                .map(transfer -> Response.ok(new GetTransferResponse(
-                        transfer.getId(),
-                        transfer.getFileName(),
-                        transfer.isExpired()
-                )).build())
+                .map(transfer -> {
+                    if (transfer.isExpired()) {
+                        return Response.status(Response.Status.GONE)
+                                .entity(new ErrorResponse("Transfer expired"))
+                                .build();
+                    }
+
+                    InputStream stream = downloadTransferUseCase.execute(downloadToken);
+
+                    return Response.ok(stream)
+                            .header("Content-Disposition",
+                                    "attachment; filename=\"" + transfer.getFileName() + "\"")
+                            .build();
+                })
                 .orElse(Response.status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("Transfer not found"))
                         .build());
     }
-
 }
