@@ -1,5 +1,6 @@
 package it.lacksfer.adapters.in.rest;
 
+import it.lacksfer.adapters.in.rest.safety.ContentDispositionBuilder;
 import it.lacksfer.adapters.in.rest.safety.FileNameSanitizer;
 import it.lacksfer.application.transfer.DownloadTransferResult;
 import it.lacksfer.adapters.in.rest.dto.UploadTransferForm;
@@ -77,7 +78,7 @@ public class TransferResource {
         DownloadTransferResult result = downloadTransferUseCase.execute(downloadToken);
 
         return Response.ok(result.content())
-                .header("Content-Disposition", "attachment; filename=\"" + result.fileName() + "\"")
+                .header("Content-Disposition", ContentDispositionBuilder.attachment(result.fileName()))
                 .build();
     }
 }
