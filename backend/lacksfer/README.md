@@ -1,61 +1,90 @@
-# lacksfer
+# Lacksfer
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+Backend didattico per file transfer stile WeTransfer.
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+## Stack
 
-## Running the application in dev mode
+- Java 21
+- Quarkus
+- Gradle
+- PostgreSQL
+- Flyway
+- Hibernate ORM
+- Azurite
+- Docker Compose
 
-You can run your application in dev mode that enables live coding using:
+## Requisiti
 
-```shell script
+- JDK 21
+- Docker Desktop
+- Git Bash o terminale compatibile
+
+## Avvio infrastruttura
+
+Dalla root del repo:
+
+```bash
+docker compose up -d
+docker compose ps
+```
+
+## Avvio backend
+
+Da `backend/lacksfer`:
+
+```bash
 ./gradlew quarkusDev
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+## Health check
 
-## Packaging and running the application
-
-The application can be packaged using:
-
-```shell script
-./gradlew build
+```bash
+curl http://localhost:8080/health
 ```
 
-It produces the `quarkus-run.jar` file in the `build/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `build/quarkus-app/lib/` directory.
+## Test
 
-The application is now runnable using `java -jar build/quarkus-app/quarkus-run.jar`.
-
-If you want to build an _über-jar_, execute the following command:
-
-```shell script
-./gradlew build -Dquarkus.package.jar.type=uber-jar
+```bash
+./gradlew test
 ```
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar build/*-runner.jar`.
+## Upload manuale
 
-## Creating a native executable
+```bash
+echo "hello lacksfer" > test.txt
 
-You can create a native executable using:
-
-```shell script
-./gradlew build -Dquarkus.native.enabled=true
+curl -X POST http://localhost:8080/transfers/upload \
+  -F "file=@test.txt;type=text/plain" \
+  -F "expiresAt=2026-05-20T12:00:00Z"
 ```
 
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
+## Download manuale
 
-```shell script
-./gradlew build -Dquarkus.native.enabled=true -Dquarkus.native.container-build=true
+Usa il `downloadToken` ricevuto dall'upload:
+
+```bash
+curl -L -o downloaded.txt http://localhost:8080/transfers/{downloadToken}/download
+cat downloaded.txt
 ```
 
-You can then execute your native executable with: `./build/lacksfer-1.0.0-SNAPSHOT-runner`
+## Stato MVP
 
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/gradle-tooling>.
+Funzionalità presenti:
 
-## Related Guides
+- upload file piccoli via backend
+- salvataggio metadata su PostgreSQL
+- salvataggio file su Azurite
+- download tramite token
+- scadenza transfer
+- migration DB con Flyway
+- filename sanitization
+- limite dimensione upload
 
-- REST ([guide](https://quarkus.io/guides/rest)): Build RESTful web services and APIs using Jakarta REST (formerly JAX-RS)
-- REST Jackson ([guide](https://quarkus.io/guides/rest#json-serialisation)): Jackson serialization support for Quarkus REST. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it
-- Hibernate ORM with Panache ([guide](https://quarkus.io/guides/hibernate-orm-panache)): Simplified JPA/Hibernate data access layer with active record and repository patterns
-- JDBC Driver - PostgreSQL ([guide](https://quarkus.io/guides/datasource)): Connect to the PostgreSQL database via JDBC
+## Roadmap breve
+
+- Angular frontend
+- upload diretto su Blob Storage con SAS token
+- supporto file grandi
+- crittografia
+- password download
+- invio email
