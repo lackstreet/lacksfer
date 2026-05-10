@@ -12,6 +12,7 @@ import it.lacksfer.domain.transfer.Transfer;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.resteasy.reactive.MultipartForm;
 
 import java.io.IOException;
@@ -23,6 +24,8 @@ import java.nio.file.Files;
 public class TransferResource {
     private final UploadTransferUseCase uploadTransferUseCase;
     private final DownloadTransferUseCase downloadTransferUseCase;
+    @ConfigProperty(name = "lacksfer.upload.max-size-bytes")
+    long maxUploadSizeBytes;
 
     public TransferResource(
             UploadTransferUseCase uploadTransferUseCase, DownloadTransferUseCase downloadTransferUseCase) {
@@ -36,6 +39,9 @@ public class TransferResource {
     public Response upload(@MultipartForm UploadTransferForm form) {
         if (form == null || form.file == null) {
             throw new IllegalArgumentException("file is required");
+        }
+        if (form.file.size() > maxUploadSizeBytes) {
+            throw new IllegalArgumentException("file exceeds maximum allowed size");
         }
         String safeFileName = FileNameSanitizer.sanitize(form.file.fileName());
         try {
