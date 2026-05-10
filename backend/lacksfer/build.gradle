@@ -19,6 +19,7 @@ dependencies {
     implementation 'com.azure:azure-storage-blob:12.33.3'
     implementation 'io.quarkus:quarkus-flyway'
     testImplementation 'io.quarkus:quarkus-junit'
+    testImplementation 'io.rest-assured:rest-assured'
     compileOnly("org.projectlombok:lombok:1.18.46")
     annotationProcessor("org.projectlombok:lombok:1.18.46")
 }
