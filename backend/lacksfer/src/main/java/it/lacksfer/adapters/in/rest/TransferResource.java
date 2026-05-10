@@ -1,5 +1,6 @@
 package it.lacksfer.adapters.in.rest;
 
+import it.lacksfer.adapters.in.rest.safety.FileNameSanitizer;
 import it.lacksfer.application.transfer.DownloadTransferResult;
 import it.lacksfer.adapters.in.rest.dto.UploadTransferForm;
 import it.lacksfer.adapters.in.rest.dto.UploadTransferResponse;
@@ -36,9 +37,10 @@ public class TransferResource {
         if (form == null || form.file == null) {
             throw new IllegalArgumentException("file is required");
         }
+        String safeFileName = FileNameSanitizer.sanitize(form.file.fileName());
         try {
             FileContent fileContent = new FileContent(
-                    form.file.fileName(),
+                    safeFileName,
                     form.file.contentType(),
                     form.file.size(),
                     Files.newInputStream(form.file.uploadedFile())
