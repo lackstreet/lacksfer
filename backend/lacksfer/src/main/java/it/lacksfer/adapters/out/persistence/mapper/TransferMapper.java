@@ -1,5 +1,6 @@
-package it.lacksfer.adapters.out.persistence;
+package it.lacksfer.adapters.out.persistence.mapper;
 
+import it.lacksfer.adapters.out.persistence.TransferEntity;
 import it.lacksfer.domain.transfer.Transfer;
 
 public class TransferMapper {

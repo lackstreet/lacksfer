@@ -1,4 +1,6 @@
 package it.lacksfer.application.transfer;
+import it.lacksfer.domain.exception.TransferExpiredException;
+import it.lacksfer.domain.exception.TransferNotFoundException;
 import it.lacksfer.domain.transfer.Transfer;
 import it.lacksfer.ports.out.FileStoragePort;
 import it.lacksfer.ports.out.TransferRepositoryPort;
@@ -26,10 +28,10 @@ public class DownloadTransferUseCase {
 
 
         Transfer transfer = repositoryPort.findByDownloadToken(downloadToken)
-                .orElseThrow(() -> new IllegalArgumentException("downloadToken not found"));
+                .orElseThrow(() -> new TransferNotFoundException("Transfer not found"));
 
         if (transfer.isExpired()) {
-            throw new IllegalArgumentException("Download link expired");
+            throw new TransferExpiredException("Transfer expired");
         }
 
         InputStream content = fileStoragePort.download(transfer.getBlobName());
