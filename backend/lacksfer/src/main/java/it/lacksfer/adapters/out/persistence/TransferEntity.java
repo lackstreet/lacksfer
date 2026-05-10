@@ -1,5 +1,6 @@
 package it.lacksfer.adapters.out.persistence;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -14,16 +15,22 @@ import java.util.UUID;
 @Table(name="transfers")
 public class TransferEntity {
     @Id
+    @Column(name="id")
     private UUID id;
     @NotNull
+    @Column(name="file_name")
     private String fileName;
     @NotNull
+    @Column(name="created_at")
     private Instant createdAt;
     @NotNull
+    @Column(name="expires_at")
     private Instant expiresAt;
     @NotNull
+    @Column(name="download_token")
     private String downloadToken;
     @NotNull
+    @Column(name="blob_name")
     private String blobName;
 
     protected TransferEntity() {}
