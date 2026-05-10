@@ -3,7 +3,6 @@ package it.lacksfer.adapters.in.rest;
 import it.lacksfer.adapters.in.rest.safety.ContentDispositionBuilder;
 import it.lacksfer.adapters.in.rest.safety.FileNameSanitizer;
 import it.lacksfer.application.transfer.DownloadTransferResult;
-import it.lacksfer.adapters.in.rest.dto.UploadTransferForm;
 import it.lacksfer.adapters.in.rest.dto.UploadTransferResponse;
 import it.lacksfer.application.transfer.DownloadTransferUseCase;
 import it.lacksfer.application.transfer.UploadTransferUseCase;
@@ -14,10 +13,12 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.resteasy.reactive.MultipartForm;
+import org.jboss.resteasy.reactive.RestForm;
+import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.Instant;
 
 @Path("/transfers")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -37,24 +38,24 @@ public class TransferResource {
     @POST
     @Path("/upload")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response upload(@MultipartForm UploadTransferForm form) {
-        if (form == null || form.file == null) {
+    public Response upload(@RestForm("file") FileUpload file, @RestForm("expiresAt") Instant expiresAt) {
+        if (file == null) {
             throw new IllegalArgumentException("file is required");
         }
-        if (form.file.size() > maxUploadSizeBytes) {
+        if (file.size() > maxUploadSizeBytes) {
             throw new IllegalArgumentException("file exceeds maximum allowed size");
         }
-        String safeFileName = FileNameSanitizer.sanitize(form.file.fileName());
+        String safeFileName = FileNameSanitizer.sanitize(file.fileName());
         try {
             FileContent fileContent = new FileContent(
                     safeFileName,
-                    form.file.contentType(),
-                    form.file.size(),
-                    Files.newInputStream(form.file.uploadedFile())
+                    file.contentType(),
+                    file.size(),
+                    Files.newInputStream(file.uploadedFile())
             );
 
             Transfer transfer = uploadTransferUseCase.execute(
-                    fileContent, form.expiresAt
+                    fileContent, expiresAt
             );
             return Response.ok(new UploadTransferResponse(
                     transfer.getId(),
