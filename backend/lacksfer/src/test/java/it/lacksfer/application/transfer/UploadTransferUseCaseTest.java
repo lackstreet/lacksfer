@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class UploadTransferUseCaseTest {
     private static class FakeFileStoragePort implements FileStoragePort {
         private FileContent storedFileContent;
+
         @Override
         public String store(FileContent fileContent) {
             this.storedFileContent = fileContent;
@@ -28,12 +29,14 @@ class UploadTransferUseCaseTest {
 
         @Override
         public InputStream download(String blobName) {
-             throw new UnsupportedOperationException("Not implemented yet");
+            throw new UnsupportedOperationException("Not implemented yet");
         }
     }
+
     private static class FakeTransferRepositoryPort implements TransferRepositoryPort {
 
         private Transfer savedTransfer;
+
         @Override
         public Transfer save(Transfer transfer) {
             this.savedTransfer = transfer;
@@ -50,13 +53,14 @@ class UploadTransferUseCaseTest {
             throw new UnsupportedOperationException("Not implemented yet");
         }
     }
+
     @Test
-    void executeShouldStoreFileAndSaveTransfer(){
+    void executeShouldStoreFileAndSaveTransfer() {
         FakeFileStoragePort fileStoragePort = new FakeFileStoragePort();
         FakeTransferRepositoryPort repositoryPort = new FakeTransferRepositoryPort();
         UploadTransferUseCase useCase = new UploadTransferUseCase(fileStoragePort, repositoryPort);
         Instant expiresAt = Instant.now().plus(10, ChronoUnit.DAYS);
-        FileContent fileContent = new FileContent("test.txt", "text/plain", 3, new ByteArrayInputStream(new byte[] {1, 2, 3}));
+        FileContent fileContent = new FileContent("test.txt", "text/plain", 3, new ByteArrayInputStream(new byte[]{1, 2, 3}));
         Transfer result = useCase.execute(fileContent, expiresAt);
 
         assertSame(fileContent, fileStoragePort.storedFileContent);
@@ -66,5 +70,5 @@ class UploadTransferUseCaseTest {
         assertEquals("blob-123", result.getBlobName());
         assertNotNull(result.getDownloadToken());
     }
-
 }
+
