@@ -88,3 +88,10 @@ Funzionalità presenti:
 - crittografia
 - password download
 - invio email
+
+## Limiti attuali
+
+- upload pensato per file piccoli
+- i file passano ancora dal backend
+- per file grandi la roadmap prevede upload diretto su Blob Storage con SAS token
+- i test `@QuarkusTest` richiedono Postgres/Azurite avviati via Docker Compose
