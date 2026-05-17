@@ -4,6 +4,7 @@ import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.BlobServiceClientBuilder;
+import it.lacksfer.application.exception.FileStorageException;
 import it.lacksfer.domain.file.FileContent;
 import it.lacksfer.ports.out.FileStoragePort;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -37,7 +38,7 @@ public class AzuriteFileStorageAdapter implements FileStoragePort {
                     true
             );
         } catch (Exception e) {
-            throw new RuntimeException("Failed to store file", e);
+            throw new FileStorageException("File storage operation failed", e);
         }
 
         return blobName;
@@ -52,7 +53,7 @@ public class AzuriteFileStorageAdapter implements FileStoragePort {
             }
             return blobClient.openInputStream();
         }catch (Exception e){
-            throw new RuntimeException("Error during download", e);
+            throw new FileStorageException("File storage operation failed", e);
         }
     }
 
