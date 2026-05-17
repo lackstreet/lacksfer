@@ -13,7 +13,7 @@ public class TransferExpiredExceptionMapper implements ExceptionMapper<TransferE
     public Response toResponse(TransferExpiredException exception) {
         return Response.status(Response.Status.GONE)
                 .type(MediaType.APPLICATION_JSON_TYPE)
-                .entity(new ErrorResponse(exception.getMessage()))
+                .entity(new ErrorResponse("TRANSFER_EXPIRED", exception.getMessage()))
                 .build();
     }
 }

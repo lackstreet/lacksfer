@@ -12,6 +12,6 @@ public class GlobalExceptionMapper implements ExceptionMapper<IllegalArgumentExc
     public Response toResponse(IllegalArgumentException exception) {
         return Response.status(Response.Status.BAD_REQUEST)
                 .type(MediaType.APPLICATION_JSON_TYPE)
-                .entity(new ErrorResponse(exception.getMessage())).build();
+                .entity(new ErrorResponse("BAD_REQUEST", exception.getMessage())).build();
     }
 }

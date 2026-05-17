@@ -13,7 +13,7 @@ public class ValidationExceptionMapper implements ExceptionMapper<ConstraintViol
     @Override
     public Response toResponse(ConstraintViolationException exception) {
         List<String> errors = exception.getConstraintViolations().stream().map(v -> v.getMessage()).toList();
-        return Response.status(Response.Status.BAD_REQUEST).entity(new ValidationErrorResponse("Validation failed", errors))
+        return Response.status(Response.Status.BAD_REQUEST).entity(new ValidationErrorResponse("VALIDATION_FAILED", "Validation failed", errors))
                 .type(MediaType.APPLICATION_JSON_TYPE).build();
     }
 }

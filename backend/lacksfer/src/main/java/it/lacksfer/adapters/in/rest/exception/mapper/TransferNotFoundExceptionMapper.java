@@ -13,7 +13,7 @@ public class TransferNotFoundExceptionMapper implements ExceptionMapper<Transfer
     public Response toResponse(TransferNotFoundException exception) {
         return Response.status(Response.Status.NOT_FOUND)
                 .type(MediaType.APPLICATION_JSON_TYPE)
-                .entity(new ErrorResponse(exception.getMessage()))
+                .entity(new ErrorResponse("TRANSFER_NOT_FOUND", exception.getMessage()))
                 .build();
     }
 }
