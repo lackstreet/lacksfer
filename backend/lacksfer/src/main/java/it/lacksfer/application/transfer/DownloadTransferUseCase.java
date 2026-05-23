@@ -1,4 +1,5 @@
 package it.lacksfer.application.transfer;
+import it.lacksfer.application.transfer.result.DownloadTransferResult;
 import it.lacksfer.domain.exception.TransferExpiredException;
 import it.lacksfer.domain.exception.TransferNotFoundException;
 import it.lacksfer.domain.transfer.Transfer;

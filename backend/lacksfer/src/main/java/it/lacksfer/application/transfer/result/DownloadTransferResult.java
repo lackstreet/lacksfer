@@ -1,4 +1,4 @@
-package it.lacksfer.application.transfer;
+package it.lacksfer.application.transfer.result;
 
 import java.io.InputStream;
 

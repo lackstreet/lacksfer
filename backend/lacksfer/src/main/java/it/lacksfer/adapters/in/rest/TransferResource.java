@@ -2,7 +2,7 @@ package it.lacksfer.adapters.in.rest;
 
 import it.lacksfer.adapters.in.rest.safety.ContentDispositionBuilder;
 import it.lacksfer.adapters.in.rest.safety.FileNameSanitizer;
-import it.lacksfer.application.transfer.DownloadTransferResult;
+import it.lacksfer.application.transfer.result.DownloadTransferResult;
 import it.lacksfer.adapters.in.rest.dto.UploadTransferResponse;
 import it.lacksfer.application.transfer.DownloadTransferUseCase;
 import it.lacksfer.application.transfer.UploadTransferUseCase;
