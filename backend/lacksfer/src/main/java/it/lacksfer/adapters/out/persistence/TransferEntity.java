@@ -1,9 +1,7 @@
 package it.lacksfer.adapters.out.persistence;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import it.lacksfer.domain.transfer.TransferStatus;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 
@@ -32,15 +30,20 @@ public class TransferEntity {
     @NotNull
     @Column(name="blob_name")
     private String blobName;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name="status", nullable = false)
+    private TransferStatus status;
 
     protected TransferEntity() {}
 
-    public TransferEntity(UUID id, String fileName, Instant createdAt, Instant expiresAt, String downloadToken, String blobName) {
+    public TransferEntity(UUID id, String fileName, Instant createdAt, Instant expiresAt, String downloadToken, String blobName, TransferStatus status) {
         this.id = id;
         this.fileName = fileName;
         this.createdAt = createdAt;
         this.expiresAt = expiresAt;
         this.downloadToken = downloadToken;
         this.blobName = blobName;
+        this.status = status;
     }
 }

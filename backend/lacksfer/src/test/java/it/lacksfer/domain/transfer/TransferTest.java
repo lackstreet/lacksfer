@@ -19,6 +19,7 @@ class TransferTest {
         assertNotNull(transfer.getId());
         assertNotNull(transfer.getDownloadToken());
         assertFalse(transfer.isExpired());
+        assertEquals(TransferStatus.READY, transfer.getStatus());
     }
 
     @Test
@@ -36,7 +37,7 @@ class TransferTest {
         String downloadToken = UUID.randomUUID().toString();
 
 
-        Transfer transfer = Transfer.rehydrate(id,"test.txt", createdAt, expiresAt, downloadToken, "blob-123");
+        Transfer transfer = Transfer.rehydrate(id,"test.txt", createdAt, expiresAt, downloadToken, "blob-123", TransferStatus.READY);
         assertEquals("blob-123", transfer.getBlobName());
         assertEquals(createdAt, transfer.getCreatedAt());
         assertEquals(expiresAt, transfer.getExpiresAt());
@@ -54,7 +55,7 @@ class TransferTest {
         String downloadToken = UUID.randomUUID().toString();
 
 
-        Transfer transfer = Transfer.rehydrate(id,"test.txt", createdAt, expiresAt, downloadToken, "blob-123");
+        Transfer transfer = Transfer.rehydrate(id,"test.txt", createdAt, expiresAt, downloadToken, "blob-123", TransferStatus.READY);
         assertTrue(transfer.isExpired());
     }
 }

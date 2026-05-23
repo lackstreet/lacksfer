@@ -11,7 +11,8 @@ public class TransferMapper {
                 entity.getCreatedAt(),
                 entity.getExpiresAt(),
                 entity.getDownloadToken(),
-                entity.getBlobName()
+                entity.getBlobName(),
+                entity.getStatus()
         );
     }
 
@@ -22,7 +23,8 @@ public class TransferMapper {
                 transfer.getCreatedAt(),
                 transfer.getExpiresAt(),
                 transfer.getDownloadToken(),
-                transfer.getBlobName()
+                transfer.getBlobName(),
+                transfer.getStatus()
         );
     }
 }

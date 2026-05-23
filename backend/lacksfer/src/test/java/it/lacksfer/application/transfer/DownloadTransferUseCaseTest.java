@@ -4,6 +4,7 @@ import it.lacksfer.domain.exception.TransferExpiredException;
 import it.lacksfer.domain.exception.TransferNotFoundException;
 import it.lacksfer.domain.file.FileContent;
 import it.lacksfer.domain.transfer.Transfer;
+import it.lacksfer.domain.transfer.TransferStatus;
 import it.lacksfer.ports.out.FileStoragePort;
 import it.lacksfer.ports.out.TransferRepositoryPort;
 import org.junit.jupiter.api.Test;
@@ -63,7 +64,7 @@ class DownloadTransferUseCaseTest {
          String downloadToken = "token-123";
          Instant expiresAt = Instant.now().plus(10, ChronoUnit.DAYS);
          Instant createdAt = Instant.now().minus(10, ChronoUnit.DAYS);
-         Transfer transfer = Transfer.rehydrate(UUID.randomUUID(), "file.txt", createdAt, expiresAt, downloadToken, "blob-123");
+         Transfer transfer = Transfer.rehydrate(UUID.randomUUID(), "file.txt", createdAt, expiresAt, downloadToken, "blob-123", TransferStatus.READY);
          TransferRepositoryPort transferRepositoryPort = new FakeTransferRepositoryPort(Optional.of(transfer));
          FakeFileStoragePort fileStoragePort = new FakeFileStoragePort();
          DownloadTransferUseCase useCase = new DownloadTransferUseCase(transferRepositoryPort, fileStoragePort);
@@ -90,7 +91,7 @@ class DownloadTransferUseCaseTest {
 
         Instant expiresAt = Instant.now().minus(10, ChronoUnit.DAYS);
         Instant createdAt = Instant.now().minus(11, ChronoUnit.DAYS);
-        Transfer transfer = Transfer.rehydrate(UUID.randomUUID(), "file.txt", createdAt, expiresAt, downloadToken, "blob-123");
+        Transfer transfer = Transfer.rehydrate(UUID.randomUUID(), "file.txt", createdAt, expiresAt, downloadToken, "blob-123", TransferStatus.READY);
 
         TransferRepositoryPort transferRepositoryPort = new FakeTransferRepositoryPort(Optional.of(transfer));
         FakeFileStoragePort fileStoragePort = new FakeFileStoragePort();
@@ -110,6 +111,22 @@ class DownloadTransferUseCaseTest {
         assertThrows(IllegalArgumentException.class, () -> useCase.execute(" "));
         assertNull(fileStoragePort.downloadedBlobName);
 
+    }
+
+    @Test
+    void executeShouldRejectPendingTransfer() {
+        String downloadToken = "token-123";
+
+        Instant expiresAt = Instant.now().plus(1, ChronoUnit.DAYS);
+        Instant createdAt = Instant.now().minus(1, ChronoUnit.DAYS);
+        Transfer transfer = Transfer.rehydrate(UUID.randomUUID(), "file.txt", createdAt, expiresAt, downloadToken, "blob-123", TransferStatus.PENDING_UPLOAD);
+
+        TransferRepositoryPort transferRepositoryPort = new FakeTransferRepositoryPort(Optional.of(transfer));
+        FakeFileStoragePort fileStoragePort = new FakeFileStoragePort();
+        DownloadTransferUseCase useCase = new DownloadTransferUseCase(transferRepositoryPort, fileStoragePort);
+
+        assertThrows(IllegalArgumentException.class, () -> useCase.execute(downloadToken));
+        assertNull(fileStoragePort.downloadedBlobName);
     }
 
 

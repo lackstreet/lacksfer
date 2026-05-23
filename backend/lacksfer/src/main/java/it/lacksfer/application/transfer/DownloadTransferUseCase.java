@@ -5,10 +5,9 @@ import it.lacksfer.domain.transfer.Transfer;
 import it.lacksfer.ports.out.FileStoragePort;
 import it.lacksfer.ports.out.TransferRepositoryPort;
 import jakarta.enterprise.context.ApplicationScoped;
-
 import java.io.InputStream;
-@ApplicationScoped
 
+@ApplicationScoped
 public class DownloadTransferUseCase {
     private final TransferRepositoryPort repositoryPort;
     private final FileStoragePort fileStoragePort;
@@ -32,6 +31,10 @@ public class DownloadTransferUseCase {
 
         if (transfer.isExpired()) {
             throw new TransferExpiredException("Transfer expired");
+        }
+
+        if (!transfer.isReady()) {
+            throw new IllegalArgumentException("Transfer is not ready");
         }
 
         InputStream content = fileStoragePort.download(transfer.getBlobName());

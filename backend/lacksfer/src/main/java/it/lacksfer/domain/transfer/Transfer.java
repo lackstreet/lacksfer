@@ -14,6 +14,7 @@ public class Transfer {
     private Instant expiresAt;
     private String downloadToken;
     private String blobName;
+    private TransferStatus status;
 
     private Transfer(){}
 
@@ -32,16 +33,18 @@ public class Transfer {
         transfer.expiresAt = expiresAt;
         transfer.downloadToken = UUID.randomUUID().toString();
         transfer.blobName = blobName;
+        transfer.status = TransferStatus.READY;
         return transfer;
     }
 
-    public static Transfer rehydrate(UUID id, String fileName, Instant createdAt, Instant expiresAt, String downloadToken, String blobName){
+    public static Transfer rehydrate(UUID id, String fileName, Instant createdAt, Instant expiresAt, String downloadToken, String blobName, TransferStatus status){
         Require.notNull(id,"id");
         Require.notBlank(fileName,"fileName");
         Require.notNull(createdAt,"createdAt");
         Require.notNull(expiresAt,"expiresAt");
         Require.notBlank(downloadToken,"downloadToken");
         Require.notBlank(blobName,"blobName");
+        Require.notNull(status,"status");
 
 
         Transfer transfer = new Transfer();
@@ -51,11 +54,16 @@ public class Transfer {
         transfer.expiresAt = expiresAt;
         transfer.downloadToken = downloadToken;
         transfer.blobName = blobName;
+        transfer.status = status;
         return transfer;
     }
 
     public boolean isExpired(){
         return this.expiresAt.isBefore(Instant.now());
+    }
+
+    public boolean isReady(){
+        return this.status == TransferStatus.READY;
     }
 
 
