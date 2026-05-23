@@ -36,7 +36,6 @@ class TransferTest {
         UUID id = UUID.randomUUID();
         String downloadToken = UUID.randomUUID().toString();
 
-
         Transfer transfer = Transfer.rehydrate(id,"test.txt", createdAt, expiresAt, downloadToken, "blob-123", TransferStatus.READY);
         assertEquals("blob-123", transfer.getBlobName());
         assertEquals(createdAt, transfer.getCreatedAt());
@@ -54,8 +53,21 @@ class TransferTest {
         UUID id = UUID.randomUUID();
         String downloadToken = UUID.randomUUID().toString();
 
-
         Transfer transfer = Transfer.rehydrate(id,"test.txt", createdAt, expiresAt, downloadToken, "blob-123", TransferStatus.READY);
         assertTrue(transfer.isExpired());
+    }
+
+    @Test
+    void createPendingShouldCreatePendingTransfer() {
+        Instant expiresAt = Instant.now().plus(10, ChronoUnit.DAYS);
+
+        Transfer transfer = Transfer.createPending("test.txt", expiresAt, "blob-123");
+        assertEquals("test.txt", transfer.getFileName());
+        assertEquals(expiresAt, transfer.getExpiresAt());
+        assertEquals("blob-123", transfer.getBlobName());
+        assertNotNull(transfer.getId());
+        assertNotNull(transfer.getDownloadToken());
+        assertEquals(TransferStatus.PENDING_UPLOAD, transfer.getStatus());
+        assertFalse(transfer.isReady());
     }
 }

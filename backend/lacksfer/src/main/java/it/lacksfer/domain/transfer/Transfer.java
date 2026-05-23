@@ -16,16 +16,18 @@ public class Transfer {
     private String blobName;
     private TransferStatus status;
 
-    private Transfer(){}
+    private Transfer() {}
 
-    public static Transfer createNew(String fileName,Instant expiresAt, String blobName){
+    private static Transfer create(String fileName, Instant expiresAt, String blobName, TransferStatus status) {
         Require.notBlank(fileName,"fileName");
         Require.notNull(expiresAt,"expiresAt");
         Require.notBlank(blobName,"blobName");
+        Require.notNull(status,"status");
 
-        if(expiresAt.isBefore(Instant.now())) {
+        if (expiresAt.isBefore(Instant.now())) {
             throw new IllegalArgumentException("Expires At cannot be before now");
         }
+
         Transfer transfer = new Transfer();
         transfer.id = UUID.randomUUID();
         transfer.fileName = fileName;
@@ -33,8 +35,17 @@ public class Transfer {
         transfer.expiresAt = expiresAt;
         transfer.downloadToken = UUID.randomUUID().toString();
         transfer.blobName = blobName;
-        transfer.status = TransferStatus.READY;
+        transfer.status = status;
+
         return transfer;
+    }
+
+    public static Transfer createNew(String fileName,Instant expiresAt, String blobName) {
+        return create(fileName, expiresAt, blobName, TransferStatus.READY);
+    }
+
+    public static Transfer createPending(String fileName, Instant expiresAt, String blobName) {
+        return create(fileName, expiresAt, blobName, TransferStatus.PENDING_UPLOAD);
     }
 
     public static Transfer rehydrate(UUID id, String fileName, Instant createdAt, Instant expiresAt, String downloadToken, String blobName, TransferStatus status){
@@ -46,7 +57,6 @@ public class Transfer {
         Require.notBlank(blobName,"blobName");
         Require.notNull(status,"status");
 
-
         Transfer transfer = new Transfer();
         transfer.id = id;
         transfer.fileName = fileName;
@@ -55,6 +65,7 @@ public class Transfer {
         transfer.downloadToken = downloadToken;
         transfer.blobName = blobName;
         transfer.status = status;
+
         return transfer;
     }
 
