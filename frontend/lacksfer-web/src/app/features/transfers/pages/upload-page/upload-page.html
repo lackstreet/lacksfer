@@ -1,0 +1,43 @@
+<section class="upload-page">
+  <header class="upload-page__header">
+    <h1>Lacksfer</h1>
+    <p>Upload a file and create a temporary download link.</p>
+  </header>
+
+  <form class="upload-form" [formGroup]="uploadForm" (ngSubmit)="submit()">
+    <label class="field">
+      <span>File</span>
+      <input type="file" (change)="onFileSelected($event)" />
+    </label>
+
+    <label class="field">
+      <span>Expiration</span>
+      <input type="datetime-local" formControlName="expiresAt" />
+    </label>
+
+    <button type="submit" [disabled]="!canSubmit()">
+      @if (isUploading()) {
+        Uploading...
+      } @else {
+        Create transfer
+      }
+    </button>
+  </form>
+
+  @if (selectedFile()) {
+    <p class="file-summary">Selected: {{ selectedFile()?.name }}</p>
+  }
+
+  @if (errorMessage()) {
+    <p class="message message--error">{{ errorMessage() }}</p>
+  }
+
+  @if (downloadToken()) {
+    <div class="message message--success">
+      <p>Transfer created.</p>
+      <a [href]="'/api/transfers/' + downloadToken() + '/download'">
+        Download file
+      </a>
+    </div>
+  }
+</section>

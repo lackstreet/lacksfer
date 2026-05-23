@@ -1,0 +1,27 @@
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  background-color: #f6f7f9;
+  place-items: center;
+  padding: 2rem;
+  border: 1px solid #eaeaea;
+  font-family: Consolas;
+}
+
+.upload-panel {
+  width: 100%;
+  max-width: 640px;
+  padding: 2rem;
+  background-color: #fff;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+}
+
+.h1 {
+  margin: 0 0 0.5rem;
+}
+
+p {
+  margin: 0;
+  color: #5d6675;
+}
