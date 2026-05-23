@@ -1,0 +1,10 @@
+<section class="download-page">
+  <h1>Your file is ready</h1>
+  <p>Use the button below to start the download.</p>
+
+  @if (downloadUrl()) {
+    <a class="download-button" [href]="downloadUrl()">Download File</a>
+  } @else {
+    <p class="message message--error">Invalid download link.</p>
+  }
+</section>

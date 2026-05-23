@@ -35,9 +35,7 @@
   @if (downloadToken()) {
     <div class="message message--success">
       <p>Transfer created.</p>
-      <a [href]="'/api/transfers/' + downloadToken() + '/download'">
-        Download file
-      </a>
+      <a [href]="'/download/' + downloadToken()">Open download page</a>
     </div>
   }
 </section>

@@ -1,0 +1,32 @@
+.download-page {
+  width: 100%;
+  max-width: 560px;
+  padding: 2rem;
+  background-color: #ffffff;
+  border: 1px solid #d9dee7;
+  border-radius: 8px;
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+}
+
+p {
+  margin: 0 0 1.5rem;
+  color: #5d6675;
+}
+
+.download-button {
+  display: inline-block;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  background: #1f6feb;
+  color: #ffffff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.message--error {
+  color: #b42318;
+}
+
