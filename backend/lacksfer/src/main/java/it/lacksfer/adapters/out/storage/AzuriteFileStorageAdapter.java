@@ -57,4 +57,9 @@ public class AzuriteFileStorageAdapter implements FileStoragePort {
         }
     }
 
+    @Override
+    public String createUploadUrl(String blobName) {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
 }

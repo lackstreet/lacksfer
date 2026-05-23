@@ -31,6 +31,11 @@ class UploadTransferUseCaseTest {
         public InputStream download(String blobName) {
             throw new UnsupportedOperationException("Not implemented yet");
         }
+
+        @Override
+        public String createUploadUrl(String blobName) {
+            throw new UnsupportedOperationException("Not implemented yet");
+        }
     }
 
     private static class FakeTransferRepositoryPort implements TransferRepositoryPort {

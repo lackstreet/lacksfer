@@ -7,5 +7,6 @@ import java.io.InputStream;
 public interface FileStoragePort {
     String store(FileContent fileContent);
     InputStream download(String blobName);
+    String createUploadUrl(String blobName);
 
 }

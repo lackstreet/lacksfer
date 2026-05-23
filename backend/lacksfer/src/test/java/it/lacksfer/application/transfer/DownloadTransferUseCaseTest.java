@@ -58,6 +58,11 @@ class DownloadTransferUseCaseTest {
              return new ByteArrayInputStream(new byte[] {1, 2, 3});
 
          }
+
+         @Override
+         public String createUploadUrl(String blobName) {
+             throw new UnsupportedOperationException("Not implemented yet");
+         }
      }
      @Test
      void executeShouldDownloadStoredBlobWhenTransferExists(){
