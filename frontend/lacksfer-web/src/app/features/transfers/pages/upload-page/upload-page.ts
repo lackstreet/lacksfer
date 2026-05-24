@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TransferApiService } from '../../services/transfer-api.service';
-import { finalize, map, startWith } from 'rxjs';
+import { finalize, map, startWith, switchMap } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
@@ -64,8 +64,15 @@ export class UploadPage {
     this.errorMessage.set(null);
     this.downloadToken.set(null);
 
-    this.transferApi.upload(file, expiresAt)
-      .pipe(finalize(() => this.isUploading.set(false)))
+    this.transferApi.startDirectUpload(file.name, expiresAt)
+      .pipe(
+        switchMap((startResponse) =>
+          this.transferApi.uploadToBlob(startResponse.uploadUrl, file).pipe(
+            switchMap(() => this.transferApi.completeDirectUpload(startResponse.transferId)),
+          )
+        ),
+        finalize(() => this.isUploading.set(false)),
+      )
       .subscribe({
         next: (response) => {
           this.downloadToken.set(response.downloadToken);
