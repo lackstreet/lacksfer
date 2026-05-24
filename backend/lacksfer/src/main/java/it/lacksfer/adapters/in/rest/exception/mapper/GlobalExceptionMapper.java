@@ -1,6 +1,6 @@
 package it.lacksfer.adapters.in.rest.exception.mapper;
 
-import it.lacksfer.adapters.in.rest.dto.ErrorResponse;
+import it.lacksfer.adapters.in.rest.dto.response.ErrorResponse;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;

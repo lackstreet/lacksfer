@@ -70,4 +70,12 @@ class TransferTest {
         assertEquals(TransferStatus.PENDING_UPLOAD, transfer.getStatus());
         assertFalse(transfer.isReady());
     }
+
+    @Test
+    void markAsReadyShouldChangeStatusToReady(){
+        Transfer transfer = Transfer.createPending("test.txt", Instant.now().plus(10, ChronoUnit.DAYS), "blob-123");
+        transfer.markAsReady();
+        assertEquals(TransferStatus.READY, transfer.getStatus());
+        assertTrue(transfer.isReady());
+    }
 }

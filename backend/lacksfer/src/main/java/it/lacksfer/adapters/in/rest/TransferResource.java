@@ -1,12 +1,16 @@
 package it.lacksfer.adapters.in.rest;
 
+import it.lacksfer.adapters.in.rest.dto.request.StartDirectUploadRequest;
+import it.lacksfer.adapters.in.rest.dto.response.StartDirectUploadResponse;
 import it.lacksfer.adapters.in.rest.safety.ContentDispositionBuilder;
 import it.lacksfer.adapters.in.rest.safety.FileNameSanitizer;
+import it.lacksfer.application.transfer.StartDirectUploadUseCase;
 import it.lacksfer.application.transfer.result.DownloadTransferResult;
-import it.lacksfer.adapters.in.rest.dto.UploadTransferResponse;
+import it.lacksfer.adapters.in.rest.dto.response.UploadTransferResponse;
 import it.lacksfer.application.transfer.DownloadTransferUseCase;
 import it.lacksfer.application.transfer.UploadTransferUseCase;
 
+import it.lacksfer.application.transfer.result.StartDirectUploadResult;
 import it.lacksfer.domain.file.FileContent;
 import it.lacksfer.domain.transfer.Transfer;
 import jakarta.ws.rs.*;
@@ -26,13 +30,16 @@ import java.time.Instant;
 public class TransferResource {
     private final UploadTransferUseCase uploadTransferUseCase;
     private final DownloadTransferUseCase downloadTransferUseCase;
+    private final StartDirectUploadUseCase startDirectUploadUseCase;
+
     @ConfigProperty(name = "lacksfer.upload.max-size-bytes")
     long maxUploadSizeBytes;
 
     public TransferResource(
-            UploadTransferUseCase uploadTransferUseCase, DownloadTransferUseCase downloadTransferUseCase) {
+            UploadTransferUseCase uploadTransferUseCase, DownloadTransferUseCase downloadTransferUseCase, StartDirectUploadUseCase startDirectUploadUseCase) {
         this.uploadTransferUseCase = uploadTransferUseCase;
         this.downloadTransferUseCase = downloadTransferUseCase;
+        this.startDirectUploadUseCase = startDirectUploadUseCase;
     }
 
     @POST
@@ -82,4 +89,30 @@ public class TransferResource {
                 .header("Content-Disposition", ContentDispositionBuilder.attachment(result.fileName()))
                 .build();
     }
+
+    @POST
+    public Response startDirectUpload(StartDirectUploadRequest request){
+        if (request == null) {
+            throw new IllegalArgumentException("request is required");
+        }
+
+        String sanitizedFileName = FileNameSanitizer.sanitize(request.fileName());
+        StartDirectUploadResult result = startDirectUploadUseCase.execute(
+                sanitizedFileName,
+                request.expiresAt()
+        );
+
+        Transfer transfer = result.transfer();
+
+        return Response.ok(new StartDirectUploadResponse(
+                transfer.getId(),
+                transfer.getFileName(),
+                transfer.getDownloadToken(),
+                result.uploadUrl()
+        )).build();
+
+    }
+
+
+
 }

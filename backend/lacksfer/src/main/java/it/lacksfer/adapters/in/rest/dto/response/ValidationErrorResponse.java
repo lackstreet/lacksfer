@@ -1,4 +1,4 @@
-package it.lacksfer.adapters.in.rest.dto;
+package it.lacksfer.adapters.in.rest.dto.response;
 
 import java.util.List;
 

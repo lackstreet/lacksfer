@@ -77,6 +77,13 @@ public class Transfer {
         return this.status == TransferStatus.READY;
     }
 
+    public void markAsReady(){
+        if (this.status == TransferStatus.READY){
+            return;
+        }
+        this.status = TransferStatus.READY;
+    }
+
 
 
 }

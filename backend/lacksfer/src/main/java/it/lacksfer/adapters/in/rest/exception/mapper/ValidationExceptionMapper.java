@@ -1,6 +1,6 @@
 package it.lacksfer.adapters.in.rest.exception.mapper;
 
-import it.lacksfer.adapters.in.rest.dto.ValidationErrorResponse;
+import it.lacksfer.adapters.in.rest.dto.response.ValidationErrorResponse;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
