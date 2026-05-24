@@ -15,7 +15,6 @@ import it.lacksfer.application.transfer.UploadTransferUseCase;
 import it.lacksfer.application.transfer.result.StartDirectUploadResult;
 import it.lacksfer.domain.file.FileContent;
 import it.lacksfer.domain.transfer.Transfer;
-import it.lacksfer.domain.transfer.TransferStatus;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
