@@ -18,8 +18,8 @@ public class JpaTransferRepositoryAdapter implements TransferRepositoryPort , Pa
     @Transactional
     public Transfer save(Transfer transfer){
         TransferEntity entity = mapper.toEntity(transfer);
-        persist(entity);
-        return mapper.toDomain(entity);
+        TransferEntity saved = getEntityManager().merge(entity);
+        return mapper.toDomain(saved);
     }
 
     @Override

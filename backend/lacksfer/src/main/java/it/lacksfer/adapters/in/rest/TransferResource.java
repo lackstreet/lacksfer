@@ -1,9 +1,11 @@
 package it.lacksfer.adapters.in.rest;
 
 import it.lacksfer.adapters.in.rest.dto.request.StartDirectUploadRequest;
+import it.lacksfer.adapters.in.rest.dto.response.CompleteTransferUploadResponse;
 import it.lacksfer.adapters.in.rest.dto.response.StartDirectUploadResponse;
 import it.lacksfer.adapters.in.rest.safety.ContentDispositionBuilder;
 import it.lacksfer.adapters.in.rest.safety.FileNameSanitizer;
+import it.lacksfer.application.transfer.CompleteTransferUploadUseCase;
 import it.lacksfer.application.transfer.StartDirectUploadUseCase;
 import it.lacksfer.application.transfer.result.DownloadTransferResult;
 import it.lacksfer.adapters.in.rest.dto.response.UploadTransferResponse;
@@ -13,6 +15,7 @@ import it.lacksfer.application.transfer.UploadTransferUseCase;
 import it.lacksfer.application.transfer.result.StartDirectUploadResult;
 import it.lacksfer.domain.file.FileContent;
 import it.lacksfer.domain.transfer.Transfer;
+import it.lacksfer.domain.transfer.TransferStatus;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -23,6 +26,7 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.time.Instant;
+import java.util.UUID;
 
 @Path("/transfers")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -31,15 +35,17 @@ public class TransferResource {
     private final UploadTransferUseCase uploadTransferUseCase;
     private final DownloadTransferUseCase downloadTransferUseCase;
     private final StartDirectUploadUseCase startDirectUploadUseCase;
+    private final CompleteTransferUploadUseCase completeTransferUploadUseCase;
 
     @ConfigProperty(name = "lacksfer.upload.max-size-bytes")
     long maxUploadSizeBytes;
 
     public TransferResource(
-            UploadTransferUseCase uploadTransferUseCase, DownloadTransferUseCase downloadTransferUseCase, StartDirectUploadUseCase startDirectUploadUseCase) {
+            UploadTransferUseCase uploadTransferUseCase, DownloadTransferUseCase downloadTransferUseCase, StartDirectUploadUseCase startDirectUploadUseCase, CompleteTransferUploadUseCase completeTransferUploadUseCase) {
         this.uploadTransferUseCase = uploadTransferUseCase;
         this.downloadTransferUseCase = downloadTransferUseCase;
         this.startDirectUploadUseCase = startDirectUploadUseCase;
+        this.completeTransferUploadUseCase = completeTransferUploadUseCase;
     }
 
     @POST
@@ -109,6 +115,22 @@ public class TransferResource {
                 transfer.getFileName(),
                 transfer.getDownloadToken(),
                 result.uploadUrl()
+        )).build();
+
+    }
+
+    @POST
+    @Path("/{transferId}/complete")
+    public Response complete(@PathParam("transferId") UUID transferId){
+        if (transferId == null) {
+           throw new IllegalArgumentException("transferId is required");
+        }
+        Transfer transfer = completeTransferUploadUseCase.execute(transferId);
+        return Response.ok( new CompleteTransferUploadResponse(
+                transfer.getId(),
+                transfer.getFileName(),
+                transfer.getDownloadToken(),
+                transfer.getStatus()
         )).build();
 
     }
