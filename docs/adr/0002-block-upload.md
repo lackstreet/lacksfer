@@ -1,8 +1,8 @@
-# ADR 0001 - Direct Blob Upload
+# ADR 0002 - Block Upload
 
 ## Context
 Lacksfer currently uploads files with a single direct PUT to blob Storage.
-This works for small and medium files. However, it is not the right model for very large files (target 70GB files upload simultaneously)
+This works for small and medium files. However, it is not the right model for very large files (target 50 GB files)
 ## Decision
 Use Azure Block Blob upload flow:
 
