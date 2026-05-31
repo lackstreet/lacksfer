@@ -41,6 +41,7 @@ export class UploadPage {
   readonly downloadToken = signal<string | null>(null);
   readonly uploadStatus = signal<UploadStatus>('idle');
   readonly uploadProgress = signal(0);
+  readonly resumableSession = signal<UploadSession | null>(null);
 
   readonly uploadForm = new FormGroup({
     expiresAt: new FormControl('', {
@@ -70,6 +71,13 @@ export class UploadPage {
     this.downloadToken.set(null);
     this.uploadStatus.set('idle');
     this.uploadProgress.set(0);
+    this.resumableSession.set(null);
+
+    if (file) {
+      void this.uploadSessionStore.findByFile(file).then((session) => {
+        this.resumableSession.set(session ?? null);
+      });
+    }
   }
 
   submit(): void {

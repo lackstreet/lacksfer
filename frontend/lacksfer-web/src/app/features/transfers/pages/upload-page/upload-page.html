@@ -40,6 +40,12 @@
     <p class="file-summary">Selected: {{ selectedFile()?.name }}</p>
   }
 
+  @if (resumableSession()) {
+    <p class="message">
+      Resume available: {{ resumableSession()?.completedBlockIndexes?.length }} blocks already uploaded.
+    </p>
+  }
+
   @if (errorMessage()) {
     <p class="message message--error">{{ errorMessage() }}</p>
   }
