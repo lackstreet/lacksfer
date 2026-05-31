@@ -19,3 +19,11 @@ export interface CompleteTransferUploadResponse {
   downloadToken: string;
   status: TransferStatus;
 }
+
+export type UploadStatus =
+  | 'idle'
+  | 'creating'
+  | 'uploading'
+  | 'completing'
+  | 'ready'
+  | 'error';

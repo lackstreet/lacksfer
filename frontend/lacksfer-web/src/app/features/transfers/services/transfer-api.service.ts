@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpEvent, HttpClient } from '@angular/common/http';
 import { UploadTransferResponse, CompleteTransferUploadResponse, StartDirectUploadResponse } from '../models/transfer.models';
 import { Observable } from 'rxjs';
 
@@ -24,11 +24,13 @@ export class TransferApiService {
     });
   }
 
-  uploadToBlob(uploadUrl: string, file: File): Observable<void> {
+  uploadToBlob(uploadUrl: string, file: File): Observable<HttpEvent<void>> {
     return this.http.put<void>(uploadUrl, file, {
       headers: {
-        'x-ms-blob-type': 'BlockBlob'
+        'x-ms-blob-type': 'BlockBlob',
       },
+      observe: 'events',
+      reportProgress: true,
     });
   }
 

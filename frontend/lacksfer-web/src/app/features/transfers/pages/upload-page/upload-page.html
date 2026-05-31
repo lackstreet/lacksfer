@@ -22,6 +22,18 @@
         Create transfer
       }
     </button>
+
+    @if (uploadStatus() !== 'idle') {
+      <div class="upload-progress">
+        <p>Status: {{ uploadStatus() }}</p>
+
+        @if (uploadStatus() === 'uploading' || uploadStatus() === 'completing' || uploadStatus() === 'ready') {
+          <progress max="100" [value]="uploadProgress()"></progress>
+          <span>{{ uploadProgress() }}%</span>
+        }
+      </div>
+    }
+
   </form>
 
   @if (selectedFile()) {
