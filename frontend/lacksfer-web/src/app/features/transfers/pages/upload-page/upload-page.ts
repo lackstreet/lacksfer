@@ -1,10 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TransferApiService } from '../../services/transfer-api.service';
-import { filter, finalize, map, startWith, switchMap, tap } from 'rxjs';
+import { concatMap, filter, finalize, from, last, map, startWith, switchMap, tap } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { UploadStatus } from '../../models/transfer.models';
 import { HttpEventType } from '@angular/common/http';
+import { splitFileIntoBlocks } from '../../utils/file-blocks';
+
+const BLOCK_SIZE_BYTES = 10 * 1024 * 1024;
 
 @Component({
   selector: 'app-upload-page',
@@ -66,6 +69,9 @@ export class UploadPage {
       return;
     }
 
+    const blocks = splitFileIntoBlocks(file, BLOCK_SIZE_BYTES);
+    const blockIndexes = blocks.map((block) => block.index);
+
     this.isUploading.set(true);
     this.errorMessage.set(null);
     this.downloadToken.set(null);
@@ -76,21 +82,28 @@ export class UploadPage {
       .startDirectUpload(file.name, expiresAt)
       .pipe(
         switchMap((startResponse) =>
-          this.transferApi.uploadToBlob(startResponse.uploadUrl, file).pipe(
-            tap((event) => {
-              this.uploadStatus.set('uploading');
+          from(blocks).pipe(
+            concatMap((block) =>
+                this.transferApi.uploadBlock(startResponse.uploadUrl, block.index, block.blob).pipe(
+                  tap((event) => {
+                    this.uploadStatus.set('uploading');
 
-              if (event.type === HttpEventType.UploadProgress && event.total) {
-                const progress = Math.round((event.loaded / event.total) * 100);
-                this.uploadProgress.set(progress);
-              }
-            }),
-            filter((event) => event.type === HttpEventType.Response),
+                    if (event.type === HttpEventType.Response) {
+                      const completedBlocks = block.index + 1;
+                      const progress = Math.round((completedBlocks / blocks.length) * 100);
+                      this.uploadProgress.set(progress);
+                    }
+                  }),
+                  filter((event) => event.type === HttpEventType.Response),
+                ),
+              ),
+            last(),
+            switchMap(() => this.transferApi.commitBlockList(startResponse.uploadUrl, blockIndexes)),
             switchMap(() => {
-              this.uploadStatus.set('completing');
-              return this.transferApi.completeDirectUpload(startResponse.transferId);
-            }),
-          ),
+                this.uploadStatus.set('completing');
+                return this.transferApi.completeDirectUpload(startResponse.transferId);
+              }),
+            )
         ),
         finalize(() => this.isUploading.set(false)),
       )
