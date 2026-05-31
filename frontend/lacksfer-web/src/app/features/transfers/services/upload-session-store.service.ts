@@ -17,7 +17,7 @@ export class UploadSessionStoreService {
       request.onupgradeneeded = () => {
         const database = request.result;
 
-        if(!database.objectStoreNames.contains(STORE_NAME)) {
+        if (!database.objectStoreNames.contains(STORE_NAME)) {
           database.createObjectStore(STORE_NAME, { keyPath: 'transferId'});
         }
       };

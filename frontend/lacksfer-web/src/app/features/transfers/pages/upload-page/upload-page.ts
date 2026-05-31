@@ -16,6 +16,8 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { UploadStatus } from '../../models/transfer.models';
 import { HttpEventType } from '@angular/common/http';
 import { splitFileIntoBlocks } from '../../utils/file-blocks';
+import { UploadSessionStoreService } from '../../services/upload-session-store.service';
+import { UploadSession } from '../../models/upload-session.models';
 
 const BLOCK_SIZE_BYTES = 10 * 1024 * 1024;
 const PARALLEL_UPLOADS = 3;
@@ -31,6 +33,8 @@ const BLOCK_UPLOAD_RETRY_DELAY_MS = 1000;
 })
 export class UploadPage {
   private readonly transferApi = inject(TransferApiService);
+  private readonly uploadSessionStore = inject(UploadSessionStoreService);
+
   readonly selectedFile = signal<File | null>(null);
   readonly isUploading = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -95,37 +99,73 @@ export class UploadPage {
     this.transferApi
       .startDirectUpload(file.name, expiresAt)
       .pipe(
-        switchMap((startResponse) =>
-          from(blocks).pipe(
-            mergeMap((block) =>
-              this.transferApi.uploadBlock(startResponse.uploadUrl, block.index, block.blob).pipe(
-                retry({
-                  count: BLOCK_UPLOAD_RETRY_COUNT,
-                  delay: BLOCK_UPLOAD_RETRY_DELAY_MS,
-                }),
-                tap((event) => {
-                  this.uploadStatus.set('uploading');
+        switchMap((startResponse) => {
+          const now = new Date().toISOString();
 
-                  if (event.type === HttpEventType.Response) {
-                    completedBlockCount++;
-                    const progress = Math.round((completedBlockCount / blocks.length) * 100);
-                    this.uploadProgress.set(progress);
-                  }
-                }),
-                filter((event) => event.type === HttpEventType.Response),
-              ),
-              PARALLEL_UPLOADS,
-            ),
-            last(),
+          const session: UploadSession = {
+            transferId: startResponse.transferId,
+            uploadUrl: startResponse.uploadUrl,
+            downloadToken: startResponse.downloadToken,
+            fileName: file.name,
+            fileSize: file.size,
+            fileLastModified: file.lastModified,
+            blockSizeBytes: BLOCK_SIZE_BYTES,
+            completedBlockIndexes: [],
+            createdAt: now,
+            updatedAt: now,
+          };
+
+          return from(this.uploadSessionStore.save(session)).pipe(
             switchMap(() =>
-              this.transferApi.commitBlockList(startResponse.uploadUrl, blockIndexes),
+              from(blocks).pipe(
+                mergeMap(
+                  (block) =>
+                    this.transferApi
+                      .uploadBlock(startResponse.uploadUrl, block.index, block.blob)
+                      .pipe(
+                        retry({
+                          count: BLOCK_UPLOAD_RETRY_COUNT,
+                          delay: BLOCK_UPLOAD_RETRY_DELAY_MS,
+                        }),
+                        tap((event) => {
+                          this.uploadStatus.set('uploading');
+
+                          if (event.type === HttpEventType.Response) {
+                            completedBlockCount++;
+
+                            session.completedBlockIndexes = [...session.completedBlockIndexes, block.index];
+                            session.updatedAt = new Date().toISOString();
+
+                            void this.uploadSessionStore.save(session);
+
+                            const progress = Math.round(
+                              (completedBlockCount / blocks.length) * 100,
+                            );
+
+                            this.uploadProgress.set(progress);
+                          }
+                        }),
+                        filter((event) => event.type === HttpEventType.Response),
+                      ),
+                  PARALLEL_UPLOADS,
+                ),
+
+                last(),
+
+                switchMap(() =>
+                  this.transferApi.commitBlockList(startResponse.uploadUrl, blockIndexes),
+                ),
+
+                switchMap(() => {
+                  this.uploadStatus.set('completing');
+
+                  return this.transferApi.completeDirectUpload(startResponse.transferId);
+                }),
+              ),
             ),
-            switchMap(() => {
-              this.uploadStatus.set('completing');
-              return this.transferApi.completeDirectUpload(startResponse.transferId);
-            }),
-          ),
-        ),
+          );
+        }),
+
         finalize(() => this.isUploading.set(false)),
       )
       .subscribe({
@@ -133,7 +173,10 @@ export class UploadPage {
           this.downloadToken.set(response.downloadToken);
           this.uploadStatus.set('ready');
           this.uploadProgress.set(100);
+
+          void this.uploadSessionStore.remove(response.transferId);
         },
+
         error: () => {
           this.errorMessage.set('Upload failed. Try again.');
           this.uploadStatus.set('error');
