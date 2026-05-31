@@ -7,7 +7,7 @@ import {
   from,
   last,
   map,
-  mergeMap,
+  mergeMap, retry,
   startWith,
   switchMap,
   tap,
@@ -19,6 +19,8 @@ import { splitFileIntoBlocks } from '../../utils/file-blocks';
 
 const BLOCK_SIZE_BYTES = 10 * 1024 * 1024;
 const PARALLEL_UPLOADS = 3;
+const BLOCK_UPLOAD_RETRY_COUNT = 3;
+const BLOCK_UPLOAD_RETRY_DELAY_MS = 1000;
 
 @Component({
   selector: 'app-upload-page',
@@ -97,6 +99,10 @@ export class UploadPage {
           from(blocks).pipe(
             mergeMap((block) =>
               this.transferApi.uploadBlock(startResponse.uploadUrl, block.index, block.blob).pipe(
+                retry({
+                  count: BLOCK_UPLOAD_RETRY_COUNT,
+                  delay: BLOCK_UPLOAD_RETRY_DELAY_MS,
+                }),
                 tap((event) => {
                   this.uploadStatus.set('uploading');
 
