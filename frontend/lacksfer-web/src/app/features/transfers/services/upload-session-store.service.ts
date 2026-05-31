@@ -68,4 +68,27 @@ export class UploadSessionStoreService {
     });
   }
 
+  async findByFile(file: File): Promise<UploadSession | undefined> {
+    const database = await this.openDatabase();
+
+    return new Promise((resolve, reject) => {
+      const transaction = database.transaction(STORE_NAME, 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        const sessions = request.result as UploadSession[];
+
+        const session = sessions.find(
+          (candidate) =>
+            candidate.fileName === file.name &&
+            candidate.fileSize === file.size &&
+            candidate.fileLastModified === file.lastModified,
+        );
+
+        resolve(session);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
 }
