@@ -78,7 +78,20 @@ export class UploadPage {
 
     if (file) {
       void this.uploadSessionStore.findByFile(file).then((session) => {
-        this.resumableSession.set(session ?? null);
+        if (!session) {
+          this.resumableSession.set(null);
+          return;
+        }
+
+        const uploadUrlExpired = new Date(session.uploadUrlExpiresAt) <= new Date();
+
+        if (uploadUrlExpired) {
+          void this.uploadSessionStore.remove(session.transferId);
+          this.resumableSession.set(null);
+          return;
+        }
+
+        this.resumableSession.set(session);
       });
     }
   }
