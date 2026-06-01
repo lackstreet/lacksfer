@@ -2,16 +2,19 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TransferApiService } from '../../services/transfer-api.service';
 import {
+  toArray,
   filter,
   finalize,
   from,
-  last,
   map,
-  mergeMap, retry,
+  mergeMap,
+  of,
+  retry,
   startWith,
   switchMap,
   tap,
 } from 'rxjs';
+
 import { toSignal } from '@angular/core/rxjs-interop';
 import { UploadStatus } from '../../models/transfer.models';
 import { HttpEventType } from '@angular/common/http';
@@ -96,7 +99,11 @@ export class UploadPage {
 
     const blocks = splitFileIntoBlocks(file, BLOCK_SIZE_BYTES);
     const blockIndexes = blocks.map((block) => block.index);
-    let completedBlockCount = 0;
+    const existingSession = this.resumableSession();
+    const completedBlockIndexes = existingSession?.completedBlockIndexes ?? [];
+    const completedBlockIndexSet = new Set(completedBlockIndexes);
+    const blocksToUpload = blocks.filter((block) => !completedBlockIndexSet.has(block.index));
+    let completedBlockCount = completedBlockIndexes.length;
 
     this.isUploading.set(true);
     this.errorMessage.set(null);
@@ -104,13 +111,20 @@ export class UploadPage {
     this.uploadStatus.set('creating');
     this.uploadProgress.set(0);
 
-    this.transferApi
-      .startDirectUpload(file.name, expiresAt)
+    const startUpload$ = existingSession
+      ? of({
+          transferId: existingSession.transferId,
+          uploadUrl: existingSession.uploadUrl,
+          downloadToken: existingSession.downloadToken,
+        })
+      : this.transferApi.startDirectUpload(file.name, expiresAt);
+
+    startUpload$
       .pipe(
         switchMap((startResponse) => {
           const now = new Date().toISOString();
 
-          const session: UploadSession = {
+          const session: UploadSession = existingSession ?? {
             transferId: startResponse.transferId,
             uploadUrl: startResponse.uploadUrl,
             downloadToken: startResponse.downloadToken,
@@ -123,9 +137,10 @@ export class UploadPage {
             updatedAt: now,
           };
 
+
           return from(this.uploadSessionStore.save(session)).pipe(
             switchMap(() =>
-              from(blocks).pipe(
+              from(blocksToUpload).pipe(
                 mergeMap(
                   (block) =>
                     this.transferApi
@@ -141,7 +156,10 @@ export class UploadPage {
                           if (event.type === HttpEventType.Response) {
                             completedBlockCount++;
 
-                            session.completedBlockIndexes = [...session.completedBlockIndexes, block.index];
+                            session.completedBlockIndexes = [
+                              ...session.completedBlockIndexes,
+                              block.index,
+                            ];
                             session.updatedAt = new Date().toISOString();
 
                             void this.uploadSessionStore.save(session);
@@ -157,9 +175,7 @@ export class UploadPage {
                       ),
                   PARALLEL_UPLOADS,
                 ),
-
-                last(),
-
+                toArray(),
                 switchMap(() =>
                   this.transferApi.commitBlockList(startResponse.uploadUrl, blockIndexes),
                 ),
