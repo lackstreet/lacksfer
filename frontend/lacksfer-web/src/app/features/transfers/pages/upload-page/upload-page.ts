@@ -111,11 +111,13 @@ export class UploadPage {
     this.uploadStatus.set('creating');
     this.uploadProgress.set(0);
 
+
     const startUpload$ = existingSession
       ? of({
           transferId: existingSession.transferId,
           uploadUrl: existingSession.uploadUrl,
           downloadToken: existingSession.downloadToken,
+          uploadUrlExpiresAt: existingSession.uploadUrlExpiresAt,
         })
       : this.transferApi.startDirectUpload(file.name, expiresAt);
 
@@ -135,6 +137,7 @@ export class UploadPage {
             completedBlockIndexes: [],
             createdAt: now,
             updatedAt: now,
+            uploadUrlExpiresAt: startResponse.uploadUrlExpiresAt,
           };
 
 

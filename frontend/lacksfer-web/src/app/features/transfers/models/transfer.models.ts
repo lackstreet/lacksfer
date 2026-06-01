@@ -11,6 +11,7 @@ export interface StartDirectUploadResponse {
   fileName: string;
   downloadToken: string;
   uploadUrl: string;
+  uploadUrlExpiresAt: string;
 }
 
 export interface CompleteTransferUploadResponse {
