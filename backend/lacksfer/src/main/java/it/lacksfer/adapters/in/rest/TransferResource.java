@@ -113,7 +113,8 @@ public class TransferResource {
                 transfer.getId(),
                 transfer.getFileName(),
                 transfer.getDownloadToken(),
-                result.uploadUrl()
+                result.uploadUrl(),
+                result.uploadUrlExpiresAt()
         )).build();
 
     }

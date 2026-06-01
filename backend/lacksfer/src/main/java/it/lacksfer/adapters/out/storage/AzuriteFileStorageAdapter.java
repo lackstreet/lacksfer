@@ -9,6 +9,7 @@ import com.azure.storage.blob.sas.BlobServiceSasSignatureValues;
 import it.lacksfer.application.exception.FileStorageException;
 import it.lacksfer.domain.file.FileContent;
 import it.lacksfer.ports.out.FileStoragePort;
+import it.lacksfer.ports.out.UploadUrl;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -65,20 +66,21 @@ public class AzuriteFileStorageAdapter implements FileStoragePort {
     }
 
     @Override
-    public String createUploadUrl(String blobName) {
+    public UploadUrl createUploadUrl(String blobName) {
         try{
+            OffsetDateTime expiresAt = OffsetDateTime.now().plusMinutes(MAX_TIME_TO_LIVE_MINUTES);
             BlobClient blobClient = containerClient.getBlobClient(blobName);
             BlobSasPermission permission = new BlobSasPermission()
                     .setCreatePermission(true)
                     .setWritePermission(true);
 
             BlobServiceSasSignatureValues values = new BlobServiceSasSignatureValues(
-                    OffsetDateTime.now().plusMinutes(MAX_TIME_TO_LIVE_MINUTES),
+                    expiresAt,
                     permission
             ).setStartTime(OffsetDateTime.now().minusMinutes(MIN_TIME_TO_LIVE_MINUTES));
 
             String sasToken = blobClient.generateSas(values);
-            return String.format(UPLOAD_URL_FORMAT, blobClient.getBlobUrl(), sasToken);
+            return new UploadUrl(String.format(UPLOAD_URL_FORMAT,blobClient.getBlobUrl(),sasToken),expiresAt.toInstant());
         }catch (Exception e){
             throw new FileStorageException("File storage operation failed", e);
         }

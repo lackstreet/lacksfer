@@ -4,6 +4,7 @@ import it.lacksfer.application.transfer.result.StartDirectUploadResult;
 import it.lacksfer.domain.transfer.Transfer;
 import it.lacksfer.ports.out.BlobNameGeneratorPort;
 import it.lacksfer.ports.out.FileStoragePort;
+import it.lacksfer.ports.out.UploadUrl;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.time.Instant;
@@ -23,8 +24,8 @@ public class StartDirectUploadUseCase {
     public StartDirectUploadResult execute(String fileName, Instant expiresAt) {
         String blobName = blobNameGeneratorPort.generate();
         Transfer transfer = createPendingTransferUseCase.execute(fileName, expiresAt, blobName);
-        String uploadUrl = fileStoragePort.createUploadUrl(transfer.getBlobName());
+        UploadUrl uploadUrl = fileStoragePort.createUploadUrl(transfer.getBlobName());
 
-        return new StartDirectUploadResult(transfer, uploadUrl);
+        return new StartDirectUploadResult(transfer, uploadUrl.value(), uploadUrl.expiresAt().toString());
     }
 }

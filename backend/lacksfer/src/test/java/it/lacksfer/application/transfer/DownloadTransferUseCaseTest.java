@@ -8,6 +8,7 @@ import it.lacksfer.domain.transfer.Transfer;
 import it.lacksfer.domain.transfer.TransferStatus;
 import it.lacksfer.ports.out.FileStoragePort;
 import it.lacksfer.ports.out.TransferRepositoryPort;
+import it.lacksfer.ports.out.UploadUrl;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -61,7 +62,7 @@ class DownloadTransferUseCaseTest {
          }
 
          @Override
-         public String createUploadUrl(String blobName) {
+         public UploadUrl createUploadUrl(String blobName) {
              throw new UnsupportedOperationException("Not implemented yet");
          }
      }

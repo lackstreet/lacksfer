@@ -7,6 +7,7 @@ import it.lacksfer.domain.transfer.TransferStatus;
 import it.lacksfer.ports.out.BlobNameGeneratorPort;
 import it.lacksfer.ports.out.FileStoragePort;
 import it.lacksfer.ports.out.TransferRepositoryPort;
+import it.lacksfer.ports.out.UploadUrl;
 import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
@@ -34,9 +35,9 @@ class StartDirectUploadUseCaseTest {
         }
 
         @Override
-        public String createUploadUrl(String blobName) {
+        public UploadUrl createUploadUrl(String blobName) {
             this.requestedBlobName = blobName;
-            return "https://upload-url.test/" + blobName;
+            return new UploadUrl("https://upload-url.test/" + blobName, Instant.now().plus(5, ChronoUnit.DAYS));
         }
     }
 

@@ -4,5 +4,6 @@ import it.lacksfer.domain.transfer.Transfer;
 
 public record StartDirectUploadResult(
         Transfer transfer,
-        String uploadUrl
+        String uploadUrl,
+        String uploadUrlExpiresAt
 ) {}

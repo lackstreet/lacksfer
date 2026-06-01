@@ -6,6 +6,7 @@ public record StartDirectUploadResponse(
         UUID transferId,
         String fileName,
         String downloadToken,
-        String uploadUrl
+        String uploadUrl,
+        String uploadUrlExpiresAt
 ) {
 }
