@@ -9,6 +9,7 @@ import com.azure.storage.blob.sas.BlobServiceSasSignatureValues;
 import it.lacksfer.application.exception.FileStorageException;
 import it.lacksfer.domain.file.FileContent;
 import it.lacksfer.ports.out.FileStoragePort;
+import it.lacksfer.ports.out.StorageFileMetadata;
 import it.lacksfer.ports.out.UploadUrl;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -82,6 +83,23 @@ public class AzuriteFileStorageAdapter implements FileStoragePort {
             String sasToken = blobClient.generateSas(values);
             return new UploadUrl(String.format(UPLOAD_URL_FORMAT,blobClient.getBlobUrl(),sasToken),expiresAt.toInstant());
         }catch (Exception e){
+            throw new FileStorageException("File storage operation failed", e);
+        }
+    }
+
+    @Override
+    public StorageFileMetadata getMetadata(String blobName) {
+        try {
+            if (blobName == null || blobName.isBlank()) {
+                return new StorageFileMetadata(false, 0);
+            }
+
+            BlobClient blobClient = containerClient.getBlobClient(blobName);
+            if (!blobClient.exists()) {
+                return new StorageFileMetadata(false, 0);
+            }
+            return new StorageFileMetadata(true, blobClient.getProperties().getBlobSize());
+        } catch (Exception e) {
             throw new FileStorageException("File storage operation failed", e);
         }
     }

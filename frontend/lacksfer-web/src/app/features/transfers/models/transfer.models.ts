@@ -1,9 +1,3 @@
-export interface UploadTransferResponse {
-  id: string;
-  fileName: string;
-  downloadToken: string;
-}
-
 export type TransferStatus = 'PENDING_UPLOAD' | 'READY';
 
 export interface StartDirectUploadResponse {
@@ -12,6 +6,7 @@ export interface StartDirectUploadResponse {
   downloadToken: string;
   uploadUrl: string;
   uploadUrlExpiresAt: string;
+  expectedStorageSizeBytes: number;
 }
 
 export interface CompleteTransferUploadResponse {

@@ -4,5 +4,6 @@ import java.time.Instant;
 
 public record StartDirectUploadRequest(
         String fileName,
-        Instant expiresAt
+        Instant expiresAt,
+        long expectedStorageSizeBytes
 ) {}

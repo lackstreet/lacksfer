@@ -8,5 +8,7 @@ public interface FileStoragePort {
     String store(FileContent fileContent);
     InputStream download(String blobName);
     UploadUrl createUploadUrl(String blobName);
+    StorageFileMetadata getMetadata(String blobName);
+
 
 }

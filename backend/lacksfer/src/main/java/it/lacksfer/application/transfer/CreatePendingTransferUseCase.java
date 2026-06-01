@@ -16,10 +16,10 @@ public class CreatePendingTransferUseCase {
         this.transferRepositoryPort = transferRepositoryPort;
     }
 
-    public Transfer execute(String fileName, Instant expiresAt, String blobName) {
+    public Transfer execute(String fileName, Instant expiresAt, String blobName, long expectedStorageSizeBytes) {
         LOG.infof("Creating pending transfer for fileName=%s", fileName);
 
-        Transfer transfer = Transfer.createPending(fileName, expiresAt, blobName);
+        Transfer transfer = Transfer.createPending(fileName, expiresAt, blobName, expectedStorageSizeBytes);
         LOG.infof("Saving pending transfer for fileName=%s", fileName);
 
         return transferRepositoryPort.save(transfer);

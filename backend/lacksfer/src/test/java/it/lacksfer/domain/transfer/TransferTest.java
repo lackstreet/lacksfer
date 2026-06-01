@@ -12,7 +12,7 @@ class TransferTest {
     @Test
     void createNewShouldCreateValidTransfer(){
         Instant expiresAt = Instant.now().plus(10, ChronoUnit.DAYS);
-        Transfer transfer = Transfer.createNew("test.txt", expiresAt, "blob-123");
+        Transfer transfer = Transfer.createNew("test.txt", expiresAt, "blob-123",1024L);
         assertEquals("test.txt", transfer.getFileName());
         assertEquals(expiresAt, transfer.getExpiresAt());
         assertEquals("blob-123", transfer.getBlobName());
@@ -26,7 +26,7 @@ class TransferTest {
     void createNewShouldRejectExpiredTransfer(){
         Instant expiresAt = Instant.now().minus(10, ChronoUnit.DAYS);
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> Transfer.createNew("test.txt", expiresAt, "blob-123"));
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> Transfer.createNew("test.txt", expiresAt, "blob-123",1024L));
         assertEquals("Expires At cannot be before now", exception.getMessage());
     }
     @Test
@@ -36,7 +36,7 @@ class TransferTest {
         UUID id = UUID.randomUUID();
         String downloadToken = UUID.randomUUID().toString();
 
-        Transfer transfer = Transfer.rehydrate(id,"test.txt", createdAt, expiresAt, downloadToken, "blob-123", TransferStatus.READY);
+        Transfer transfer = Transfer.rehydrate(id,"test.txt", createdAt, expiresAt, downloadToken, "blob-123", TransferStatus.READY,1024L);
         assertEquals("blob-123", transfer.getBlobName());
         assertEquals(createdAt, transfer.getCreatedAt());
         assertEquals(expiresAt, transfer.getExpiresAt());
@@ -53,7 +53,7 @@ class TransferTest {
         UUID id = UUID.randomUUID();
         String downloadToken = UUID.randomUUID().toString();
 
-        Transfer transfer = Transfer.rehydrate(id,"test.txt", createdAt, expiresAt, downloadToken, "blob-123", TransferStatus.READY);
+        Transfer transfer = Transfer.rehydrate(id,"test.txt", createdAt, expiresAt, downloadToken, "blob-123", TransferStatus.READY, 1024L);
         assertTrue(transfer.isExpired());
     }
 
@@ -61,7 +61,7 @@ class TransferTest {
     void createPendingShouldCreatePendingTransfer() {
         Instant expiresAt = Instant.now().plus(10, ChronoUnit.DAYS);
 
-        Transfer transfer = Transfer.createPending("test.txt", expiresAt, "blob-123");
+        Transfer transfer = Transfer.createPending("test.txt", expiresAt, "blob-123",1024L);
         assertEquals("test.txt", transfer.getFileName());
         assertEquals(expiresAt, transfer.getExpiresAt());
         assertEquals("blob-123", transfer.getBlobName());
@@ -73,7 +73,7 @@ class TransferTest {
 
     @Test
     void markAsReadyShouldChangeStatusToReady(){
-        Transfer transfer = Transfer.createPending("test.txt", Instant.now().plus(10, ChronoUnit.DAYS), "blob-123");
+        Transfer transfer = Transfer.createPending("test.txt", Instant.now().plus(10, ChronoUnit.DAYS), "blob-123",1024L);
         transfer.markAsReady();
         assertEquals(TransferStatus.READY, transfer.getStatus());
         assertTrue(transfer.isReady());

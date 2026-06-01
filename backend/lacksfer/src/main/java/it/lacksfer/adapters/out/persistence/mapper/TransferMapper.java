@@ -12,7 +12,8 @@ public class TransferMapper {
                 entity.getExpiresAt(),
                 entity.getDownloadToken(),
                 entity.getBlobName(),
-                entity.getStatus()
+                entity.getStatus(),
+                entity.getExpectedStorageSizeBytes()
         );
     }
 
@@ -24,7 +25,8 @@ public class TransferMapper {
                 transfer.getExpiresAt(),
                 transfer.getDownloadToken(),
                 transfer.getBlobName(),
-                transfer.getStatus()
+                transfer.getStatus(),
+                transfer.getExpectedStorageSizeBytes()
         );
     }
 }

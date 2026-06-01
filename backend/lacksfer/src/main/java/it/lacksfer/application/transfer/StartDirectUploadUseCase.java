@@ -21,9 +21,9 @@ public class StartDirectUploadUseCase {
         this.blobNameGeneratorPort = blobNameGeneratorPort;
     }
 
-    public StartDirectUploadResult execute(String fileName, Instant expiresAt) {
+    public StartDirectUploadResult execute(String fileName, Instant expiresAt, long expectedStorageSizeBytes) {
         String blobName = blobNameGeneratorPort.generate();
-        Transfer transfer = createPendingTransferUseCase.execute(fileName, expiresAt, blobName);
+        Transfer transfer = createPendingTransferUseCase.execute(fileName, expiresAt, blobName, expectedStorageSizeBytes);
         UploadUrl uploadUrl = fileStoragePort.createUploadUrl(transfer.getBlobName());
 
         return new StartDirectUploadResult(transfer, uploadUrl.value(), uploadUrl.expiresAt().toString());

@@ -4,10 +4,7 @@ import it.lacksfer.application.transfer.result.StartDirectUploadResult;
 import it.lacksfer.domain.file.FileContent;
 import it.lacksfer.domain.transfer.Transfer;
 import it.lacksfer.domain.transfer.TransferStatus;
-import it.lacksfer.ports.out.BlobNameGeneratorPort;
-import it.lacksfer.ports.out.FileStoragePort;
-import it.lacksfer.ports.out.TransferRepositoryPort;
-import it.lacksfer.ports.out.UploadUrl;
+import it.lacksfer.ports.out.*;
 import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
@@ -39,6 +36,13 @@ class StartDirectUploadUseCaseTest {
             this.requestedBlobName = blobName;
             return new UploadUrl("https://upload-url.test/" + blobName, Instant.now().plus(5, ChronoUnit.DAYS));
         }
+
+        @Override
+        public StorageFileMetadata getMetadata(String blobName) {
+            return null;
+        }
+
+
     }
 
     private static class FakeTransferRepositoryPort implements TransferRepositoryPort {
@@ -77,7 +81,7 @@ class StartDirectUploadUseCaseTest {
 
         Instant expiresAt = Instant.now().plus(10, ChronoUnit.DAYS);
 
-        StartDirectUploadResult result = useCase.execute("test.txt", expiresAt);
+        StartDirectUploadResult result = useCase.execute("test.txt", expiresAt, 1024L);
 
         assertSame(result.transfer(), repository.savedTransfer);
         assertEquals(TransferStatus.PENDING_UPLOAD, result.transfer().getStatus());

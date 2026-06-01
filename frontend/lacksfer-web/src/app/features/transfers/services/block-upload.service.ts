@@ -72,7 +72,7 @@ export class BlockUploadService {
           downloadToken: existingSession.downloadToken,
           uploadUrlExpiresAt: existingSession.uploadUrlExpiresAt,
         })
-      : this.transferApi.startDirectUpload(file.name, expiresAt);
+      : this.transferApi.startDirectUpload(file.name, expiresAt, file.size);
 
     return concat(
       of({ type: 'creating' } satisfies BlockUploadEvent),

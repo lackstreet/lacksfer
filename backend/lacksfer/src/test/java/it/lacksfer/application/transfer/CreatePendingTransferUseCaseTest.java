@@ -40,7 +40,7 @@ class CreatePendingTransferUseCaseTest {
         CreatePendingTransferUseCase useCase = new CreatePendingTransferUseCase(repository);
         Instant expiresAt = Instant.now().plus(10, ChronoUnit.DAYS);
 
-        Transfer result = useCase.execute("test.txt", expiresAt, "blob-123");
+        Transfer result = useCase.execute("test.txt", expiresAt, "blob-123", 1024L);
 
         assertSame(result, repository.savedTransfer);
         assertEquals("test.txt", result.getFileName());

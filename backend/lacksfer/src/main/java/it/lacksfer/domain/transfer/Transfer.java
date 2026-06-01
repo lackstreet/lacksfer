@@ -15,14 +15,16 @@ public class Transfer {
     private String downloadToken;
     private String blobName;
     private TransferStatus status;
+    private long expectedStorageSizeBytes;
 
     private Transfer() {}
 
-    private static Transfer create(String fileName, Instant expiresAt, String blobName, TransferStatus status) {
+    private static Transfer create(String fileName, Instant expiresAt, String blobName, TransferStatus status, long expectedStorageSizeBytes) {
         Require.notBlank(fileName,"fileName");
         Require.notNull(expiresAt,"expiresAt");
         Require.notBlank(blobName,"blobName");
         Require.notNull(status,"status");
+        Require.positive(expectedStorageSizeBytes,"expectedStorageSizeBytes");
 
         if (expiresAt.isBefore(Instant.now())) {
             throw new IllegalArgumentException("Expires At cannot be before now");
@@ -36,19 +38,21 @@ public class Transfer {
         transfer.downloadToken = UUID.randomUUID().toString();
         transfer.blobName = blobName;
         transfer.status = status;
+        transfer.expectedStorageSizeBytes = expectedStorageSizeBytes;
+
 
         return transfer;
     }
 
-    public static Transfer createNew(String fileName,Instant expiresAt, String blobName) {
-        return create(fileName, expiresAt, blobName, TransferStatus.READY);
+    public static Transfer createNew(String fileName,Instant expiresAt, String blobName, long expectedStorageSizeBytes) {
+        return create(fileName, expiresAt, blobName, TransferStatus.READY, expectedStorageSizeBytes);
     }
 
-    public static Transfer createPending(String fileName, Instant expiresAt, String blobName) {
-        return create(fileName, expiresAt, blobName, TransferStatus.PENDING_UPLOAD);
+    public static Transfer createPending(String fileName, Instant expiresAt, String blobName, long expectedStorageSizeBytes) {
+        return create(fileName, expiresAt, blobName, TransferStatus.PENDING_UPLOAD, expectedStorageSizeBytes);
     }
 
-    public static Transfer rehydrate(UUID id, String fileName, Instant createdAt, Instant expiresAt, String downloadToken, String blobName, TransferStatus status){
+    public static Transfer rehydrate(UUID id, String fileName, Instant createdAt, Instant expiresAt, String downloadToken, String blobName, TransferStatus status, long expectedStorageSizeBytes){
         Require.notNull(id,"id");
         Require.notBlank(fileName,"fileName");
         Require.notNull(createdAt,"createdAt");
@@ -56,6 +60,7 @@ public class Transfer {
         Require.notBlank(downloadToken,"downloadToken");
         Require.notBlank(blobName,"blobName");
         Require.notNull(status,"status");
+        Require.positive(expectedStorageSizeBytes,"expectedStorageSizeBytes");
 
         Transfer transfer = new Transfer();
         transfer.id = id;
@@ -65,6 +70,7 @@ public class Transfer {
         transfer.downloadToken = downloadToken;
         transfer.blobName = blobName;
         transfer.status = status;
+        transfer.expectedStorageSizeBytes = expectedStorageSizeBytes;
 
         return transfer;
     }

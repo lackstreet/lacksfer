@@ -7,6 +7,7 @@ import it.lacksfer.domain.file.FileContent;
 import it.lacksfer.domain.transfer.Transfer;
 import it.lacksfer.domain.transfer.TransferStatus;
 import it.lacksfer.ports.out.FileStoragePort;
+import it.lacksfer.ports.out.StorageFileMetadata;
 import it.lacksfer.ports.out.TransferRepositoryPort;
 import it.lacksfer.ports.out.UploadUrl;
 import org.junit.jupiter.api.Test;
@@ -65,13 +66,19 @@ class DownloadTransferUseCaseTest {
          public UploadUrl createUploadUrl(String blobName) {
              throw new UnsupportedOperationException("Not implemented yet");
          }
+
+         @Override
+         public StorageFileMetadata getMetadata(String blobName) {
+             return null;
+         }
+
      }
      @Test
      void executeShouldDownloadStoredBlobWhenTransferExists(){
          String downloadToken = "token-123";
          Instant expiresAt = Instant.now().plus(10, ChronoUnit.DAYS);
          Instant createdAt = Instant.now().minus(10, ChronoUnit.DAYS);
-         Transfer transfer = Transfer.rehydrate(UUID.randomUUID(), "file.txt", createdAt, expiresAt, downloadToken, "blob-123", TransferStatus.READY);
+         Transfer transfer = Transfer.rehydrate(UUID.randomUUID(), "file.txt", createdAt, expiresAt, downloadToken, "blob-123", TransferStatus.READY, 1024L);
          TransferRepositoryPort transferRepositoryPort = new FakeTransferRepositoryPort(Optional.of(transfer));
          FakeFileStoragePort fileStoragePort = new FakeFileStoragePort();
          DownloadTransferUseCase useCase = new DownloadTransferUseCase(transferRepositoryPort, fileStoragePort);
@@ -98,7 +105,7 @@ class DownloadTransferUseCaseTest {
 
         Instant expiresAt = Instant.now().minus(10, ChronoUnit.DAYS);
         Instant createdAt = Instant.now().minus(11, ChronoUnit.DAYS);
-        Transfer transfer = Transfer.rehydrate(UUID.randomUUID(), "file.txt", createdAt, expiresAt, downloadToken, "blob-123", TransferStatus.READY);
+        Transfer transfer = Transfer.rehydrate(UUID.randomUUID(), "file.txt", createdAt, expiresAt, downloadToken, "blob-123", TransferStatus.READY, 1024L);
 
         TransferRepositoryPort transferRepositoryPort = new FakeTransferRepositoryPort(Optional.of(transfer));
         FakeFileStoragePort fileStoragePort = new FakeFileStoragePort();
@@ -126,7 +133,7 @@ class DownloadTransferUseCaseTest {
 
         Instant expiresAt = Instant.now().plus(1, ChronoUnit.DAYS);
         Instant createdAt = Instant.now().minus(1, ChronoUnit.DAYS);
-        Transfer transfer = Transfer.rehydrate(UUID.randomUUID(), "file.txt", createdAt, expiresAt, downloadToken, "blob-123", TransferStatus.PENDING_UPLOAD);
+        Transfer transfer = Transfer.rehydrate(UUID.randomUUID(), "file.txt", createdAt, expiresAt, downloadToken, "blob-123", TransferStatus.PENDING_UPLOAD, 1024L);
 
         TransferRepositoryPort transferRepositoryPort = new FakeTransferRepositoryPort(Optional.of(transfer));
         FakeFileStoragePort fileStoragePort = new FakeFileStoragePort();
