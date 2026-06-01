@@ -126,6 +126,11 @@ export class UploadPage {
             this.uploadStatus.set('ready');
             this.uploadProgress.set(100);
           }
+
+          if (event.type === 'error') {
+            this.errorMessage.set(event.message);
+            this.uploadStatus.set('error');
+          }
         },
         error: () => {
           this.errorMessage.set('Upload failed. Try again.');

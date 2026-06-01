@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpEventType } from '@angular/common/http';
 
 import {
+  catchError,
   concat,
   filter,
   from,
@@ -39,16 +40,14 @@ export class BlockUploadService {
     expiresAt: string,
     existingSession: UploadSession | null,
   ): Observable<BlockUploadEvent> {
+
     const blocks = splitFileIntoBlocks(file, BLOCK_SIZE_BYTES);
     const blockIndexes = blocks.map((block) => block.index);
-
     const completedBlockIndexes = existingSession?.completedBlockIndexes ?? [];
-
     const completedBlockIndexSet = new Set(completedBlockIndexes);
-
     const blocksToUpload = blocks.filter((block) => !completedBlockIndexSet.has(block.index));
-
     let completedBlockCount = completedBlockIndexes.length;
+
 
     const uploadedBytesByBlock = new Map<number, number>(
       blocks
@@ -143,6 +142,14 @@ export class BlockUploadService {
                               progress: calculateProgress(),
                             } satisfies BlockUploadEvent;
                           }),
+
+                          catchError(() =>
+                            of({
+                              type: 'error',
+                              message:
+                                'A file block could not be uploaded. Check your connection and retry.',
+                            } satisfies BlockUploadEvent),
+                          ),
                         ),
                     PARALLEL_UPLOADS,
                   ),
@@ -154,19 +161,35 @@ export class BlockUploadService {
 
                 this.transferApi.commitBlockList(startResponse.uploadUrl, blockIndexes).pipe(
                   switchMap(() =>
-                    this.transferApi.completeDirectUpload(startResponse.transferId),
+                    this.transferApi.completeDirectUpload(startResponse.transferId).pipe(
+                      tap((response) => {
+                        void this.uploadSessionStore.remove(response.transferId);
+                      }),
+
+                      map(
+                        (response) =>
+                          ({
+                            type: 'ready',
+                            downloadToken: response.downloadToken,
+                          }) satisfies BlockUploadEvent,
+                      ),
+
+                      catchError(() =>
+                        of({
+                          type: 'error',
+                          message:
+                            'Upload completed, but final backend verification failed. You can retry.',
+                        } satisfies BlockUploadEvent),
+                      ),
+                    ),
                   ),
 
-                  tap((response) => {
-                    void this.uploadSessionStore.remove(response.transferId);
-                  }),
-
-                  map(
-                    (response) =>
-                      ({
-                        type: 'ready',
-                        downloadToken: response.downloadToken,
-                      }) satisfies BlockUploadEvent,
+                  catchError(() =>
+                    of({
+                      type: 'error',
+                      message:
+                        'Upload blocks completed, but Azure could not assemble the final file. You can retry.',
+                    } satisfies BlockUploadEvent),
                   ),
                 ),
               ),
