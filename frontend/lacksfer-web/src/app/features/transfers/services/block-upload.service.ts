@@ -12,7 +12,6 @@ import {
   retry,
   switchMap,
   tap,
-  toArray,
 } from 'rxjs';
 
 import { TransferApiService } from './transfer-api.service';
@@ -51,6 +50,21 @@ export class BlockUploadService {
 
     let completedBlockCount = completedBlockIndexes.length;
 
+    const uploadedBytesByBlock = new Map<number, number>(
+      blocks
+        .filter((block) => completedBlockIndexSet.has(block.index))
+        .map((block) => [block.index, block.size]),
+    );
+
+    const calculateProgress = (): number => {
+      const uploadedBytes = Array.from(uploadedBytesByBlock.values()).reduce(
+        (total, current) => total + current,
+        0,
+      );
+
+      return Math.min(100, Math.round((uploadedBytes / file.size) * 100));
+    };
+
     const startUpload$ = existingSession
       ? of({
           transferId: existingSession.transferId,
@@ -83,71 +97,76 @@ export class BlockUploadService {
 
           return from(this.uploadSessionStore.save(session)).pipe(
             switchMap(() =>
-              from(blocksToUpload).pipe(
-                mergeMap(
-                  (block) =>
-                    this.transferApi
-                      .uploadBlock(startResponse.uploadUrl, block.index, block.blob)
-                      .pipe(
-                        retry({
-                          count: BLOCK_UPLOAD_RETRY_COUNT,
-                          delay: BLOCK_UPLOAD_RETRY_DELAY_MS,
-                        }),
+              concat(
+                from(blocksToUpload).pipe(
+                  mergeMap(
+                    (block) =>
+                      this.transferApi
+                        .uploadBlock(startResponse.uploadUrl, block.index, block.blob)
+                        .pipe(
+                          retry({
+                            count: BLOCK_UPLOAD_RETRY_COUNT,
+                            delay: BLOCK_UPLOAD_RETRY_DELAY_MS,
+                          }),
 
-                        tap((event) => {
-                          if (event.type === HttpEventType.Response) {
-                            completedBlockCount++;
+                          tap((event) => {
+                            if (event.type === HttpEventType.Response) {
+                              completedBlockCount++;
 
-                            session.completedBlockIndexes = [
-                              ...session.completedBlockIndexes,
-                              block.index,
-                            ];
+                              session.completedBlockIndexes = [
+                                ...session.completedBlockIndexes,
+                                block.index,
+                              ];
 
-                            session.updatedAt = new Date().toISOString();
+                              session.updatedAt = new Date().toISOString();
 
-                            void this.uploadSessionStore.save(session);
-                          }
-                        }),
+                              void this.uploadSessionStore.save(session);
+                            }
+                          }),
 
-                        filter((event) => event.type === HttpEventType.Response),
+                          filter(
+                            (event) =>
+                              event.type === HttpEventType.UploadProgress ||
+                              event.type === HttpEventType.Response,
+                          ),
+                          map((event) => {
+                            if (event.type === HttpEventType.UploadProgress) {
+                              uploadedBytesByBlock.set(block.index, event.loaded);
+                            }
 
-                        map(() => {
-                          const progress = Math.round((completedBlockCount / blocks.length) * 100);
+                            if (event.type === HttpEventType.Response) {
+                              uploadedBytesByBlock.set(block.index, block.size);
+                            }
 
-                          return {
-                            type: 'uploading',
-                            progress,
-                          } satisfies BlockUploadEvent;
-                        }),
-                      ),
-                  PARALLEL_UPLOADS,
+                            return {
+                              type: 'uploading',
+                              progress: calculateProgress(),
+                            } satisfies BlockUploadEvent;
+                          }),
+                        ),
+                    PARALLEL_UPLOADS,
+                  ),
                 ),
 
-                toArray(),
+                of({
+                  type: 'completing',
+                } satisfies BlockUploadEvent),
 
-                switchMap(() =>
-                  concat(
-                    of({
-                      type: 'completing',
-                    } satisfies BlockUploadEvent),
+                this.transferApi.commitBlockList(startResponse.uploadUrl, blockIndexes).pipe(
+                  switchMap(() =>
+                    this.transferApi.completeDirectUpload(startResponse.transferId),
+                  ),
 
-                    this.transferApi.commitBlockList(startResponse.uploadUrl, blockIndexes).pipe(
-                      switchMap(() =>
-                        this.transferApi.completeDirectUpload(startResponse.transferId),
-                      ),
+                  tap((response) => {
+                    void this.uploadSessionStore.remove(response.transferId);
+                  }),
 
-                      tap((response) => {
-                        void this.uploadSessionStore.remove(response.transferId);
-                      }),
-
-                      map(
-                        (response) =>
-                          ({
-                            type: 'ready',
-                            downloadToken: response.downloadToken,
-                          }) satisfies BlockUploadEvent,
-                      ),
-                    ),
+                  map(
+                    (response) =>
+                      ({
+                        type: 'ready',
+                        downloadToken: response.downloadToken,
+                      }) satisfies BlockUploadEvent,
                   ),
                 ),
               ),
