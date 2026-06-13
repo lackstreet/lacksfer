@@ -6,6 +6,7 @@ import it.lacksfer.adapters.in.rest.dto.response.StartDirectUploadResponse;
 import it.lacksfer.adapters.in.rest.safety.ContentDispositionBuilder;
 import it.lacksfer.adapters.in.rest.safety.FileNameSanitizer;
 import it.lacksfer.application.transfer.CompleteTransferUploadUseCase;
+import it.lacksfer.application.transfer.RefreshDirectUploadUrlUseCase;
 import it.lacksfer.application.transfer.StartDirectUploadUseCase;
 import it.lacksfer.application.transfer.result.DownloadTransferResult;
 import it.lacksfer.application.transfer.DownloadTransferUseCase;
@@ -26,11 +27,13 @@ public class TransferResource {
     private final DownloadTransferUseCase downloadTransferUseCase;
     private final StartDirectUploadUseCase startDirectUploadUseCase;
     private final CompleteTransferUploadUseCase completeTransferUploadUseCase;
+    private final RefreshDirectUploadUrlUseCase refreshDirectUploadUrlUseCase;
 
-    public TransferResource(DownloadTransferUseCase downloadTransferUseCase, StartDirectUploadUseCase startDirectUploadUseCase, CompleteTransferUploadUseCase completeTransferUploadUseCase) {
+    public TransferResource(DownloadTransferUseCase downloadTransferUseCase, StartDirectUploadUseCase startDirectUploadUseCase, CompleteTransferUploadUseCase completeTransferUploadUseCase, RefreshDirectUploadUrlUseCase refreshDirectUploadUrlUseCase) {
         this.downloadTransferUseCase = downloadTransferUseCase;
         this.startDirectUploadUseCase = startDirectUploadUseCase;
         this.completeTransferUploadUseCase = completeTransferUploadUseCase;
+        this.refreshDirectUploadUrlUseCase = refreshDirectUploadUrlUseCase;
     }
 
     @GET
@@ -87,5 +90,25 @@ public class TransferResource {
                 transfer.getStatus()
         )).build();
 
+    }
+
+    @POST
+    @Path("/{transferId}/upload-url")
+    public Response refreshUploadUrl(@PathParam("transferId") UUID transferId) {
+        if (transferId == null) {
+            throw new IllegalArgumentException("transferId is required");
+        }
+
+        StartDirectUploadResult result = refreshDirectUploadUrlUseCase.execute(transferId);
+
+        Transfer transfer = result.transfer();
+
+        return Response.ok(new StartDirectUploadResponse(
+                transfer.getId(),
+                transfer.getFileName(),
+                transfer.getDownloadToken(),
+                result.uploadUrl(),
+                result.uploadUrlExpiresAt()
+        )).build();
     }
 }

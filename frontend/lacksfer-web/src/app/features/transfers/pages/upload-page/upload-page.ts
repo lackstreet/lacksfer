@@ -11,6 +11,7 @@ import { UploadStatus } from '../../models/transfer.models';
 import { UploadSessionStoreService } from '../../services/upload-session-store.service';
 import { UploadSession } from '../../models/upload-session.models';
 import { BlockUploadService } from '../../services/block-upload.service';
+import { TransferApiService } from '../../services/transfer-api.service';
 
 @Component({
   selector: 'app-upload-page',
@@ -22,6 +23,8 @@ import { BlockUploadService } from '../../services/block-upload.service';
 export class UploadPage {
   private readonly uploadSessionStore = inject(UploadSessionStoreService);
   private readonly blockUploadService = inject(BlockUploadService);
+  private readonly transferApiService = inject(TransferApiService);
+
 
   readonly selectedFile = signal<File | null>(null);
   readonly isUploading = signal(false);
@@ -71,8 +74,25 @@ export class UploadPage {
         const uploadUrlExpired = new Date(session.uploadUrlExpiresAt) <= new Date();
 
         if (uploadUrlExpired) {
-          void this.uploadSessionStore.remove(session.transferId);
-          this.resumableSession.set(null);
+          this.transferApiService.refreshDirectUploadUrl(session.transferId).subscribe({
+            next: (response) => {
+             const refreshedSession: UploadSession = {
+               ...session,
+               uploadUrl: response.uploadUrl,
+               uploadUrlExpiresAt: response.uploadUrlExpiresAt,
+               updatedAt: new Date().toISOString(),
+             };
+
+             void this.uploadSessionStore.save(refreshedSession);
+             this.resumableSession.set(refreshedSession);
+            },
+            error: () => {
+              void this.uploadSessionStore.remove(session.transferId);
+              this.resumableSession.set(null);
+              this.errorMessage.set('Resume session expired. Please start a new upload.');
+            },
+          });
+
           return;
         }
 

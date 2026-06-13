@@ -46,4 +46,8 @@ export class TransferApiService {
       },
     });
   }
+
+  refreshDirectUploadUrl(transferId: string): Observable<StartDirectUploadResponse> {
+    return this.http.post<StartDirectUploadResponse>(`/api/transfers/${transferId}/upload-url`, {});
+  }
 }
