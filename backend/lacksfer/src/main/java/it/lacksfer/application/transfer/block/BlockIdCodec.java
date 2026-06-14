@@ -1,8 +1,11 @@
 package it.lacksfer.application.transfer.block;
 
+import jakarta.enterprise.context.ApplicationScoped;
+
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
+@ApplicationScoped
 public class BlockIdCodec {
     private static final int PADDED_INDEX_LENGTH = 6;
 

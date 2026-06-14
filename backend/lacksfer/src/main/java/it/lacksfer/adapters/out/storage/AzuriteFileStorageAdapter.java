@@ -4,6 +4,8 @@ import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.BlobServiceClientBuilder;
+import com.azure.storage.blob.models.Block;
+import com.azure.storage.blob.models.BlockListType;
 import com.azure.storage.blob.sas.BlobSasPermission;
 import com.azure.storage.blob.sas.BlobServiceSasSignatureValues;
 import it.lacksfer.application.exception.FileStorageException;
@@ -16,6 +18,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.io.InputStream;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 @ApplicationScoped
 public class AzuriteFileStorageAdapter implements FileStoragePort {
@@ -102,6 +105,26 @@ public class AzuriteFileStorageAdapter implements FileStoragePort {
         } catch (Exception e) {
             throw new FileStorageException("File storage operation failed", e);
         }
+    }
+
+    @Override
+    public List<String> listUncommittedBlockIds(String blobName) {
+       try {
+           if (blobName == null || blobName.isBlank()) {
+               return List.of();
+           }
+
+           BlobClient blobClient = containerClient.getBlobClient(blobName);
+
+           return blobClient.getBlockBlobClient()
+                   .listBlocks(BlockListType.UNCOMMITTED)
+                   .getUncommittedBlocks()
+                   .stream()
+                   .map(Block::getName)
+                   .toList();
+       } catch (Exception e) {
+           throw new FileStorageException("File storage operation failed", e);
+       }
     }
 
 }

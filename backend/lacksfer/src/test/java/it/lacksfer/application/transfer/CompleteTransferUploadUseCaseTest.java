@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.io.InputStream;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -46,6 +47,11 @@ class CompleteTransferUploadUseCaseTest {
         @Override
         public StorageFileMetadata getMetadata(String blobName) {
             return metadata;
+        }
+
+        @Override
+        public List<String> listUncommittedBlockIds(String blobName) {
+            return List.of();
         }
 
     }

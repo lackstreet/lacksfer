@@ -2,15 +2,18 @@ package it.lacksfer.adapters.in.rest;
 
 import it.lacksfer.adapters.in.rest.dto.request.StartDirectUploadRequest;
 import it.lacksfer.adapters.in.rest.dto.response.CompleteTransferUploadResponse;
+import it.lacksfer.adapters.in.rest.dto.response.GetUploadedBlocksResponse;
 import it.lacksfer.adapters.in.rest.dto.response.StartDirectUploadResponse;
 import it.lacksfer.adapters.in.rest.safety.ContentDispositionBuilder;
 import it.lacksfer.adapters.in.rest.safety.FileNameSanitizer;
 import it.lacksfer.application.transfer.CompleteTransferUploadUseCase;
+import it.lacksfer.application.transfer.DownloadTransferUseCase;
+import it.lacksfer.application.transfer.GetUploadedBlocksUseCase;
 import it.lacksfer.application.transfer.RefreshDirectUploadUrlUseCase;
 import it.lacksfer.application.transfer.StartDirectUploadUseCase;
-import it.lacksfer.application.transfer.result.DownloadTransferResult;
-import it.lacksfer.application.transfer.DownloadTransferUseCase;
 
+import it.lacksfer.application.transfer.result.DownloadTransferResult;
+import it.lacksfer.application.transfer.result.GetUploadedBlocksResult;
 import it.lacksfer.application.transfer.result.StartDirectUploadResult;
 import it.lacksfer.domain.transfer.Transfer;
 import jakarta.ws.rs.*;
@@ -28,12 +31,14 @@ public class TransferResource {
     private final StartDirectUploadUseCase startDirectUploadUseCase;
     private final CompleteTransferUploadUseCase completeTransferUploadUseCase;
     private final RefreshDirectUploadUrlUseCase refreshDirectUploadUrlUseCase;
+    private final GetUploadedBlocksUseCase getUploadedBlockUseCase;
 
-    public TransferResource(DownloadTransferUseCase downloadTransferUseCase, StartDirectUploadUseCase startDirectUploadUseCase, CompleteTransferUploadUseCase completeTransferUploadUseCase, RefreshDirectUploadUrlUseCase refreshDirectUploadUrlUseCase) {
+    public TransferResource(DownloadTransferUseCase downloadTransferUseCase, StartDirectUploadUseCase startDirectUploadUseCase, CompleteTransferUploadUseCase completeTransferUploadUseCase, RefreshDirectUploadUrlUseCase refreshDirectUploadUrlUseCase, GetUploadedBlocksUseCase getUploadedBlockUseCase) {
         this.downloadTransferUseCase = downloadTransferUseCase;
         this.startDirectUploadUseCase = startDirectUploadUseCase;
         this.completeTransferUploadUseCase = completeTransferUploadUseCase;
         this.refreshDirectUploadUrlUseCase = refreshDirectUploadUrlUseCase;
+        this.getUploadedBlockUseCase = getUploadedBlockUseCase;
     }
 
     @GET
@@ -111,4 +116,22 @@ public class TransferResource {
                 result.uploadUrlExpiresAt()
         )).build();
     }
+
+    @GET
+    @Path("/{transferId}/uploaded-blocks")
+    public Response getUploadedBlocks(@PathParam("transferId") UUID transferId)  {
+        if (transferId == null) {
+            throw new IllegalArgumentException("transferId is required");
+        }
+
+        GetUploadedBlocksResult result = getUploadedBlockUseCase.execute(transferId);
+
+        return Response.ok(new GetUploadedBlocksResponse(
+            result.transferId(),
+            result.uploadedBlockIndexes()
+        )).build();
+    }
+
+
+
 }
