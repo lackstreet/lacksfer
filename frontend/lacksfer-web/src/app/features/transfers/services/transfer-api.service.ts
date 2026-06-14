@@ -1,6 +1,10 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpEvent, HttpClient } from '@angular/common/http';
-import { CompleteTransferUploadResponse, StartDirectUploadResponse } from '../models/transfer.models';
+import {
+  CompleteTransferUploadResponse,
+  GetUploadedBlocksResponse,
+  StartDirectUploadResponse,
+} from '../models/transfer.models';
 import { Observable } from 'rxjs';
 import { createBlockId } from '../utils/block-id';
 
@@ -49,5 +53,9 @@ export class TransferApiService {
 
   refreshDirectUploadUrl(transferId: string): Observable<StartDirectUploadResponse> {
     return this.http.post<StartDirectUploadResponse>(`/api/transfers/${transferId}/upload-url`, {});
+  }
+
+  getUploadedBlocks(transferId: string): Observable<GetUploadedBlocksResponse> {
+    return this.http.get<GetUploadedBlocksResponse>(`/api/transfers/${transferId}/uploaded-blocks`);
   }
 }

@@ -40,29 +40,8 @@ export class BlockUploadService {
     expiresAt: string,
     existingSession: UploadSession | null,
   ): Observable<BlockUploadEvent> {
-
     const blocks = splitFileIntoBlocks(file, BLOCK_SIZE_BYTES);
     const blockIndexes = blocks.map((block) => block.index);
-    const completedBlockIndexes = existingSession?.completedBlockIndexes ?? [];
-    const completedBlockIndexSet = new Set(completedBlockIndexes);
-    const blocksToUpload = blocks.filter((block) => !completedBlockIndexSet.has(block.index));
-    let completedBlockCount = completedBlockIndexes.length;
-
-
-    const uploadedBytesByBlock = new Map<number, number>(
-      blocks
-        .filter((block) => completedBlockIndexSet.has(block.index))
-        .map((block) => [block.index, block.size]),
-    );
-
-    const calculateProgress = (): number => {
-      const uploadedBytes = Array.from(uploadedBytesByBlock.values()).reduce(
-        (total, current) => total + current,
-        0,
-      );
-
-      return Math.min(100, Math.round((uploadedBytes / file.size) * 100));
-    };
 
     const startUpload$ = existingSession
       ? of({
@@ -94,106 +73,139 @@ export class BlockUploadService {
             uploadUrlExpiresAt: startResponse.uploadUrlExpiresAt,
           };
 
-          return from(this.uploadSessionStore.save(session)).pipe(
-            switchMap(() =>
-              concat(
-                from(blocksToUpload).pipe(
-                  mergeMap(
-                    (block) =>
-                      this.transferApi
-                        .uploadBlock(startResponse.uploadUrl, block.index, block.blob)
-                        .pipe(
-                          retry({
-                            count: BLOCK_UPLOAD_RETRY_COUNT,
-                            delay: BLOCK_UPLOAD_RETRY_DELAY_MS,
+          const completedBlockIndexes$ = existingSession
+            ? this.transferApi.getUploadedBlocks(startResponse.transferId).pipe(
+                map((response) => response.uploadedBlockIndexes),
+                catchError(() => of(existingSession.completedBlockIndexes)),
+              )
+            : of([]);
+
+          return completedBlockIndexes$.pipe(
+            switchMap((completedBlockIndexes) => {
+              const completedBlockIndexSet = new Set(completedBlockIndexes);
+              const blocksToUpload = blocks.filter(
+                (block) => !completedBlockIndexSet.has(block.index),
+              );
+
+              session.completedBlockIndexes = completedBlockIndexes;
+              session.updatedAt = new Date().toISOString();
+
+              const uploadedBytesByBlock = new Map<number, number>(
+                blocks
+                  .filter((block) => completedBlockIndexSet.has(block.index))
+                  .map((block) => [block.index, block.size]),
+              );
+
+              const calculateProgress = (): number => {
+                const uploadedBytes = Array.from(uploadedBytesByBlock.values()).reduce(
+                  (total, current) => total + current,
+                  0,
+                );
+
+                return Math.min(100, Math.round((uploadedBytes / file.size) * 100));
+              };
+
+              return from(this.uploadSessionStore.save(session)).pipe(
+                switchMap(() =>
+                  concat(
+                    from(blocksToUpload).pipe(
+                      mergeMap(
+                        (block) =>
+                          this.transferApi
+                            .uploadBlock(startResponse.uploadUrl, block.index, block.blob)
+                            .pipe(
+                              retry({
+                                count: BLOCK_UPLOAD_RETRY_COUNT,
+                                delay: BLOCK_UPLOAD_RETRY_DELAY_MS,
+                              }),
+
+                              tap((event) => {
+                                if (event.type === HttpEventType.Response) {
+                                  session.completedBlockIndexes = [
+                                    ...session.completedBlockIndexes,
+                                    block.index,
+                                  ];
+
+                                  session.updatedAt = new Date().toISOString();
+
+                                  void this.uploadSessionStore.save(session);
+                                }
+                              }),
+
+                              filter(
+                                (event) =>
+                                  event.type === HttpEventType.UploadProgress ||
+                                  event.type === HttpEventType.Response,
+                              ),
+
+                              map((event) => {
+                                if (event.type === HttpEventType.UploadProgress) {
+                                  uploadedBytesByBlock.set(block.index, event.loaded);
+                                }
+
+                                if (event.type === HttpEventType.Response) {
+                                  uploadedBytesByBlock.set(block.index, block.size);
+                                }
+
+                                return {
+                                  type: 'uploading',
+                                  progress: calculateProgress(),
+                                } satisfies BlockUploadEvent;
+                              }),
+
+                              catchError(() =>
+                                of({
+                                  type: 'error',
+                                  message:
+                                    'A file block could not be uploaded. Check your connection and retry.',
+                                } satisfies BlockUploadEvent),
+                              ),
+                            ),
+                        PARALLEL_UPLOADS,
+                      ),
+                    ),
+
+                    of({
+                      type: 'completing',
+                    } satisfies BlockUploadEvent),
+
+                    this.transferApi.commitBlockList(startResponse.uploadUrl, blockIndexes).pipe(
+                      switchMap(() =>
+                        this.transferApi.completeDirectUpload(startResponse.transferId).pipe(
+                          tap((response) => {
+                            void this.uploadSessionStore.remove(response.transferId);
                           }),
 
-                          tap((event) => {
-                            if (event.type === HttpEventType.Response) {
-                              completedBlockCount++;
-
-                              session.completedBlockIndexes = [
-                                ...session.completedBlockIndexes,
-                                block.index,
-                              ];
-
-                              session.updatedAt = new Date().toISOString();
-
-                              void this.uploadSessionStore.save(session);
-                            }
-                          }),
-
-                          filter(
-                            (event) =>
-                              event.type === HttpEventType.UploadProgress ||
-                              event.type === HttpEventType.Response,
+                          map(
+                            (response) =>
+                              ({
+                                type: 'ready',
+                                downloadToken: response.downloadToken,
+                              }) satisfies BlockUploadEvent,
                           ),
-                          map((event) => {
-                            if (event.type === HttpEventType.UploadProgress) {
-                              uploadedBytesByBlock.set(block.index, event.loaded);
-                            }
-
-                            if (event.type === HttpEventType.Response) {
-                              uploadedBytesByBlock.set(block.index, block.size);
-                            }
-
-                            return {
-                              type: 'uploading',
-                              progress: calculateProgress(),
-                            } satisfies BlockUploadEvent;
-                          }),
 
                           catchError(() =>
                             of({
                               type: 'error',
                               message:
-                                'A file block could not be uploaded. Check your connection and retry.',
+                                'Upload completed, but final backend verification failed. You can retry.',
                             } satisfies BlockUploadEvent),
                           ),
                         ),
-                    PARALLEL_UPLOADS,
-                  ),
-                ),
-
-                of({
-                  type: 'completing',
-                } satisfies BlockUploadEvent),
-
-                this.transferApi.commitBlockList(startResponse.uploadUrl, blockIndexes).pipe(
-                  switchMap(() =>
-                    this.transferApi.completeDirectUpload(startResponse.transferId).pipe(
-                      tap((response) => {
-                        void this.uploadSessionStore.remove(response.transferId);
-                      }),
-
-                      map(
-                        (response) =>
-                          ({
-                            type: 'ready',
-                            downloadToken: response.downloadToken,
-                          }) satisfies BlockUploadEvent,
                       ),
 
                       catchError(() =>
                         of({
                           type: 'error',
                           message:
-                            'Upload completed, but final backend verification failed. You can retry.',
+                            'Upload blocks completed, but Azure could not assemble the final file. You can retry.',
                         } satisfies BlockUploadEvent),
                       ),
                     ),
                   ),
-
-                  catchError(() =>
-                    of({
-                      type: 'error',
-                      message:
-                        'Upload blocks completed, but Azure could not assemble the final file. You can retry.',
-                    } satisfies BlockUploadEvent),
-                  ),
                 ),
-              ),
-            ),
+              );
+            }),
           );
         }),
       ),

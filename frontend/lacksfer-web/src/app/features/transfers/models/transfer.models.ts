@@ -6,7 +6,6 @@ export interface StartDirectUploadResponse {
   downloadToken: string;
   uploadUrl: string;
   uploadUrlExpiresAt: string;
-  expectedStorageSizeBytes: number;
 }
 
 export interface CompleteTransferUploadResponse {
@@ -16,6 +15,11 @@ export interface CompleteTransferUploadResponse {
   status: TransferStatus;
 }
 
+export interface GetUploadedBlocksResponse {
+  transferId: string;
+  uploadedBlockIndexes: number[];
+}
+
 export type UploadStatus =
   | 'idle'
   | 'creating'
@@ -23,3 +27,5 @@ export type UploadStatus =
   | 'completing'
   | 'ready'
   | 'error';
+
+
